@@ -1,5 +1,5 @@
 {
-  "name": "@mapbox-gis/widgets",
+  "name": "mapbox-gl-kit",
   "version": "0.1.0",
   "description": "Composable Mapbox GL JS widgets for ship route visualization",
   "type": "module",
@@ -11,8 +11,7 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    },
-    "./style": "./dist/index.css"
+    }
   },
   "files": [
     "dist"
