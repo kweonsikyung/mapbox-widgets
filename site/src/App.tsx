@@ -18,6 +18,63 @@ const C = {
   subtle: "#475569",
 };
 
+const CATEGORIES: { label: string; color: string; items: { name: string; desc: string }[] }[] = [
+  {
+    label: "Core Map", color: "#6366F1",
+    items: [
+      { name: "MapboxMap",        desc: "Context provider — wrap all other components inside" },
+      { name: "GlobeToggle",      desc: "Switch between globe and mercator projection" },
+      { name: "SearchBox",        desc: "Mapbox Geocoding autocomplete search" },
+    ],
+  },
+  {
+    label: "Route & Vessel", color: "#3B82F6",
+    items: [
+      { name: "RouteLayer",       desc: "Render past (solid) and future (dashed) routes" },
+      { name: "MarkerLayer",      desc: "Manage many custom DOM markers declaratively" },
+      { name: "ShipMarker",       desc: "Animated ship icon with optional pulse ring" },
+      { name: "OverviewMap",      desc: "Picture-in-picture minimap synced to main view" },
+    ],
+  },
+  {
+    label: "Drawing", color: "#8B5CF6",
+    items: [
+      { name: "DrawLayer",        desc: "Polygon, line, and point drawing on the map" },
+      { name: "DrawToolbar",      desc: "Mode selector UI for DrawLayer" },
+      { name: "RouteEditor",      desc: "Draggable waypoint-based route builder" },
+      { name: "BBoxSelector",     desc: "Click-drag to select a bounding box region" },
+    ],
+  },
+  {
+    label: "Data Layers", color: "#10B981",
+    items: [
+      { name: "ClusterLayer",     desc: "Groups nearby points into expandable bubbles" },
+      { name: "HeatmapLayer",     desc: "Density heatmap from GeoJSON point data" },
+      { name: "LayerPanel",       desc: "Toggle visibility of any Mapbox layer" },
+      { name: "ContextMenu",      desc: "Right-click context menu with custom actions" },
+    ],
+  },
+  {
+    label: "Map Controls", color: "#F59E0B",
+    items: [
+      { name: "ZoomControls",     desc: "Zoom in / out buttons" },
+      { name: "CompassRose",      desc: "Bearing-aware compass needle" },
+      { name: "ScaleBar",         desc: "Distance scale in km, mi, or nautical miles" },
+      { name: "CoordinateDisplay",desc: "Live cursor coordinates display" },
+    ],
+  },
+  {
+    label: "Timeline & Measure", color: "#EF4444",
+    items: [
+      { name: "TimeSlider",       desc: "Scrub and animate a time range with playback" },
+      { name: "MeasureTool",      desc: "Click-to-measure distance on the map" },
+      { name: "MeasureDisplay",   desc: "Formatted readout for MeasureTool results" },
+      { name: "interpolatePosition", desc: "Util — interpolate lng/lat along a path at t∈[0,1]" },
+      { name: "haversineDistance",   desc: "Util — great-circle distance between two points" },
+    ],
+  },
+];
+
 const FEATURES = [
   { icon: "🗺️", title: "Core Map",       tags: ["MapboxMap", "GlobeToggle", "SearchBox"],     desc: "MapboxMap context provider — drop any child component inside and it wires up automatically. GlobeToggle for 3D globe. SearchBox for Mapbox Geocoding." },
   { icon: "🚢", title: "Route & Vessel", tags: ["RouteLayer", "MarkerLayer", "ShipMarker"],    desc: "RouteLayer renders separate past (solid) and future (dashed) lines per route with hover tooltips and filtering. ShipMarker for animated vessel icons." },
@@ -264,25 +321,88 @@ function Features() {
   );
 }
 
+function ComponentsTab() {
+  const total = CATEGORIES.reduce((s, c) => s + c.items.length, 0);
+  return (
+    <div style={{ padding: "28px 24px 32px" }}>
+      <p style={{ fontSize: 13, color: C.subtle, marginBottom: 24 }}>
+        {total} exports — components, hooks, and utilities
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+        {CATEGORIES.map(cat => (
+          <div key={cat.label}>
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 7,
+              marginBottom: 12,
+            }}>
+              <span style={{
+                width: 8, height: 8, borderRadius: "50%",
+                background: cat.color, flexShrink: 0,
+              }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: cat.color, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                {cat.label}
+              </span>
+            </div>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+              gap: 8,
+            }}>
+              {cat.items.map(item => (
+                <div key={item.name} style={{
+                  padding: "12px 14px", borderRadius: 10,
+                  background: "rgba(255,255,255,0.03)",
+                  border: `1px solid rgba(255,255,255,0.07)`,
+                  transition: "border-color 0.12s, background 0.12s",
+                }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLDivElement).style.borderColor = cat.color + "44";
+                    (e.currentTarget as HTMLDivElement).style.background = cat.color + "0d";
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.07)";
+                    (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)";
+                  }}
+                >
+                  <div style={{
+                    fontFamily: "var(--mono)", fontSize: 13, fontWeight: 600,
+                    color: C.text, marginBottom: 5,
+                  }}>{item.name}</div>
+                  <div style={{ fontSize: 11.5, color: C.subtle, lineHeight: 1.55 }}>{item.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function DemoSection({ token, setToken }: { token: string; setToken: (t: string) => void }) {
-  const [activeDemo, setActiveDemo] = useState("route");
-  const [mounted, setMounted] = useState(new Set(["route"]));
+  const [activeTab, setActiveTab] = useState<string>("components");
+  const [mounted, setMounted] = useState(new Set<string>());
 
   const activate = (id: string) => {
-    setActiveDemo(id);
-    setMounted(prev => new Set([...prev, id]));
+    setActiveTab(id);
+    if (id !== "components") setMounted(prev => new Set([...prev, id]));
   };
+
+  const tabs = [
+    { id: "components", label: "Components" },
+    ...DEMOS.map(({ id, label }) => ({ id, label })),
+  ];
 
   return (
     <section id="demos" style={{ padding: "80px 24px", maxWidth: 1100, margin: "0 auto" }}>
       <h2 style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: 700, letterSpacing: "-0.03em", color: C.text, textAlign: "center", marginBottom: 12 }}>
-        Live demos
+        Explore
       </h2>
       <p style={{ textAlign: "center", color: C.muted, marginBottom: 48, fontSize: 16 }}>
-        Interactive maps powered by the actual components.
+        Browse all components, or jump into an interactive demo.
       </p>
 
-      {!token && (
+      {activeTab !== "components" && !token && (
         <div style={{
           display: "flex", alignItems: "center", gap: 10,
           padding: "12px 16px", borderRadius: 10, marginBottom: 20,
@@ -298,28 +418,36 @@ function DemoSection({ token, setToken }: { token: string; setToken: (t: string)
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 2, borderBottom: `1px solid ${C.border}` }}>
-        {DEMOS.map(({ id, label }) => {
-          const active = activeDemo === id;
-          return (
-            <button key={id} onClick={() => activate(id)} style={{
-              padding: "10px 18px", border: "none", cursor: "pointer", fontSize: 14,
-              fontWeight: active ? 600 : 400, background: "none",
-              color: active ? C.accent : C.muted,
-              borderBottom: active ? `2px solid ${C.accent}` : "2px solid transparent",
-              marginBottom: -1, transition: "all 0.12s",
-            }}>{label}</button>
-          );
-        })}
-      </div>
+      <div style={{ border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+        <div style={{ display: "flex", gap: 0, borderBottom: `1px solid ${C.border}`, background: "rgba(255,255,255,0.02)" }}>
+          {tabs.map(({ id, label }) => {
+            const active = activeTab === id;
+            return (
+              <button key={id} onClick={() => activate(id)} style={{
+                padding: "11px 20px", border: "none", cursor: "pointer", fontSize: 13.5,
+                fontWeight: active ? 600 : 400, background: "none",
+                color: active ? C.text : C.muted,
+                borderBottom: active ? `2px solid ${C.accent}` : "2px solid transparent",
+                marginBottom: -1, transition: "all 0.12s",
+                ...(id === "components" ? {
+                  borderRight: `1px solid ${C.border}`,
+                  color: active ? C.text : C.muted,
+                } : {}),
+              }}>{label}</button>
+            );
+          })}
+        </div>
 
-      <div style={{ border: `1px solid ${C.border}`, borderTop: "none", borderRadius: "0 0 14px 14px", overflow: "hidden" }}>
-        {DEMOS.map(({ id, Component }) =>
-          mounted.has(id) ? (
-            <div key={id} style={{ display: activeDemo === id ? "block" : "none" }}>
-              <Component token={token} />
-            </div>
-          ) : null
+        {activeTab === "components" ? (
+          <ComponentsTab />
+        ) : (
+          DEMOS.map(({ id, Component }) =>
+            mounted.has(id) ? (
+              <div key={id} style={{ display: activeTab === id ? "block" : "none" }}>
+                <Component token={token} />
+              </div>
+            ) : null
+          )
         )}
       </div>
     </section>
