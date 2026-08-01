@@ -7,6 +7,7 @@ import {
   SlidersHorizontal,
   Timer,
   Anchor,
+  Car,
 } from "lucide-react";
 import RouteDemo from "./demos/RouteDemo";
 import DrawDemo from "./demos/DrawDemo";
@@ -18,6 +19,7 @@ import ZoneManagementDemo from "./demos/ZoneManagementDemo";
 import SARDemo from "./demos/SARDemo";
 import PortOperationsDemo from "./demos/PortOperationsDemo";
 import TrainingDemo from "./demos/TrainingDemo";
+import SLAMDemo from "./demos/SLAMDemo";
 import {
   PreviewMapboxMap,
   PreviewGlobeToggle,
@@ -263,6 +265,12 @@ const FEATURES = [
     tags: ["ZoneLayer", "SARGrid"],
     desc: "ZoneLayer for maritime zone management with vessel alerts. SARGrid for search and rescue grid coordination. Both designed for real vessel traffic service platforms.",
   },
+  {
+    Icon: Car,
+    title: "SLAM Visualization",
+    tags: ["OccupancyGrid", "PosGraph", "SensorFOV", "UncertaintyTube"],
+    desc: "Real-time SLAM and autonomous driving visualization: occupancy grids, pose graphs with loop closure, sensor FOV overlays, and uncertainty tubes for path planning.",
+  },
 ];
 
 const DEMOS = [
@@ -276,6 +284,7 @@ const DEMOS = [
   { id: "sar",         label: "수색구조",      Component: SARDemo            },
   { id: "port",        label: "항만 운용",     Component: PortOperationsDemo },
   { id: "training",    label: "훈련 시나리오", Component: TrainingDemo       },
+  { id: "slam",        label: "SLAM / 자율주행", Component: SLAMDemo         },
 ];
 
 const CODE: Record<string, string> = {

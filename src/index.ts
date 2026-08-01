@@ -30,8 +30,18 @@ export { MeasureTool, MeasureDisplay } from "./components/MeasureTool";
 // ─── Maritime ─────────────────────────────────────────────────────────────────
 export { ZoneLayer } from "./components/ZoneLayer";
 export { SARGrid } from "./components/SARGrid";
+
+// ─── SLAM & Autonomous Driving ────────────────────────────────────────────────
+export { OccupancyGrid } from "./components/OccupancyGrid";
+export { PosGraph } from "./components/PosGraph";
+export { UncertaintyTube } from "./components/UncertaintyTube";
+export { SensorFOV } from "./components/SensorFOV";
 export type { ZoneType, Zone, ZoneLayerProps } from "./components/ZoneLayer";
 export type { SARCellStatus, SARCell, SARGridProps } from "./components/SARGrid";
+export type { OccupancyGridProps } from "./components/OccupancyGrid";
+export type { PoseNode, PoseEdge, PosGraphProps } from "./components/PosGraph";
+export type { UncertaintyTubeProps } from "./components/UncertaintyTube";
+export type { SensorConfig, SensorFOVProps } from "./components/SensorFOV";
 
 // ─── Time & Animation ─────────────────────────────────────────────────────────
 export { TimeSlider } from "./components/TimeSlider";
