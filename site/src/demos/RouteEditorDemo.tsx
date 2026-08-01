@@ -5,7 +5,7 @@ import {
   MapboxMap, RouteEditor, ZoomControls,
 } from "mapbox-gl-kit";
 import type { RouteEditorHandle } from "mapbox-gl-kit";
-import { Undo2, Redo2, Shuffle, Trash2, MousePointerClick } from "lucide-react";
+import { Undo2, Redo2, Shuffle, Trash2, MousePointerClick, Pencil, Eye } from "lucide-react";
 
 const PRESET: [number, number][] = [
   [129.04, 35.1],
@@ -89,7 +89,10 @@ export default function RouteEditorDemo({ token }: { token: string }) {
             transition: "all .15s",
           }}
         >
-          {editing ? "✏️ Editing" : "👁 Viewing"}
+          <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            {editing ? <Pencil size={12} /> : <Eye size={12} />}
+            {editing ? "Editing" : "Viewing"}
+          </span>
         </button>
 
         <div style={{ height: 1, background: "rgba(255,255,255,0.07)", margin: "0 2px" }} />
