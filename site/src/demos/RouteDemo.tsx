@@ -21,7 +21,7 @@ export default function RouteDemo({ token }: { token: string }) {
 
   const routes: Route[] = [{
     id: "r1", label: "Busan → Osaka via Shanghai",
-    pastRoute: PAST, futureRoute: FUTURE, visible: true, color: "#3B82F6",
+    past: PAST, future: FUTURE, visible: true, color: "#3B82F6",
   }];
 
   return (

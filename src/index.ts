@@ -77,8 +77,8 @@ export type { MiniRouteMapProps } from "./components/MiniRouteMap";
 
 // Editor component types
 export type { BBox, BBoxSelectorProps } from "./components/BBoxSelector";
-export type { DrawMode, DrawnFeature, DrawLayerProps, DrawToolbarProps } from "./components/DrawLayer";
-export type { RouteEditorProps } from "./components/RouteEditor";
+export type { DrawMode, DrawnFeature, DrawLayerProps, DrawLayerHandle, DrawToolbarProps } from "./components/DrawLayer";
+export type { RouteEditorProps, RouteEditorHandle } from "./components/RouteEditor";
 export type {
   DistanceUnit,
   MeasureResult,

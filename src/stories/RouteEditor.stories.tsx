@@ -39,7 +39,7 @@ function RouteEditorDemo() {
       >
         <RouteEditor
           active={editing}
-          waypoints={waypoints}
+          initialWaypoints={waypoints}
           onChange={setWaypoints}
           lineColor="#10B981"
         />
@@ -125,7 +125,7 @@ export const EmptyRoute: Story = {
           initialZoom={5}
           style={{ width: "100%", height: "100%" }}
         >
-          <RouteEditor active waypoints={waypoints} onChange={setWaypoints} />
+          <RouteEditor active initialWaypoints={waypoints} onChange={setWaypoints} />
         </MapboxMap>
         <div style={{ position: "absolute", top: 16, left: 16, background: "#fff", padding: "8px 12px", borderRadius: 8, fontSize: 12 }}>
           Click the map to start placing waypoints

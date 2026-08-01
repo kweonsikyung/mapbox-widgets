@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { MapboxMap } from "../components/MapboxMap";
 import { DrawLayer, DrawToolbar } from "../components/DrawLayer";
-import type { DrawMode, DrawnFeature } from "../components/DrawLayer";
+import type { DrawMode, DrawnFeature, DrawLayerHandle } from "../components/DrawLayer";
 import { MAPBOX_TOKEN } from "./fixtures";
 
 const meta: Meta = {
@@ -23,8 +23,11 @@ const meta: Meta = {
 export default meta;
 
 function DrawDemo({ initialMode = "none" as DrawMode }) {
+  const drawRef = useRef<DrawLayerHandle>(null);
   const [mode, setMode] = useState<DrawMode>(initialMode);
   const [features, setFeatures] = useState<DrawnFeature[]>([]);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
 
   return (
     <div style={{ width: "100%", height: 520, position: "relative" }}>
@@ -35,16 +38,20 @@ function DrawDemo({ initialMode = "none" as DrawMode }) {
         style={{ width: "100%", height: "100%" }}
       >
         <DrawLayer
+          ref={drawRef}
           mode={mode}
-          features={features}
-          onDraw={(_, all) => setFeatures(all)}
+          onFeaturesChange={setFeatures}
+          onHistoryChange={(u, r) => { setCanUndo(u); setCanRedo(r); }}
           fillColor="#3B82F6"
           strokeColor="#1D4ED8"
         />
         <DrawToolbar
           mode={mode}
           onChange={setMode}
-          onClear={() => setFeatures([])}
+          drawRef={drawRef}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          featureCount={features.length}
           style={{ position: "absolute", top: 16, right: 16 }}
         />
       </MapboxMap>

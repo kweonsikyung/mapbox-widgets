@@ -35,8 +35,8 @@ export default function TimelineDemo({ token }: { token: string }) {
 
   const routes: Route[] = [{
     id: "ship-route", label: "Busan → Osaka", visible: true, color: "#3B82F6",
-    pastRoute:   makeFC([...COORDS.slice(0, splitIdx), pos]),
-    futureRoute: makeFC([pos, ...COORDS.slice(splitIdx)]),
+    past:   makeFC([...COORDS.slice(0, splitIdx), pos]),
+    future: makeFC([pos, ...COORDS.slice(splitIdx)]),
   }];
 
   return (

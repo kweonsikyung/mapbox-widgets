@@ -4,6 +4,7 @@ import {
   Ship, Layers, Flame, Anchor,
   ClipboardCopy, PlaneTakeoff, MapPin, Ruler,
   Pentagon, Minus, Circle, X,
+  MousePointer2, Undo2, Redo2, Download, Trash2,
 } from "lucide-react";
 
 const MAP_BG: React.CSSProperties = {
@@ -207,13 +208,25 @@ export function PreviewDrawLayer() {
 }
 
 export function PreviewDrawToolbar() {
-  const [active, setActive] = useState(1);
-  const tools = [
-    { icon: <Pentagon size={15} />,  label: "Polygon" },
-    { icon: <Minus size={15} />,     label: "Line" },
-    { icon: <Circle size={13} />,    label: "Point" },
-    { icon: <X size={14} />,         label: "Clear" },
+  const [active, setActive] = useState(2);
+  type Tool = { icon: React.ReactNode; label: string; dim?: boolean; danger?: boolean };
+  const toolGroups: Tool[][] = [
+    [
+      { icon: <MousePointer2 size={14} />, label: "Select" },
+      { icon: <Pentagon size={14} />,      label: "Polygon" },
+      { icon: <Minus size={14} />,         label: "Line" },
+      { icon: <Circle size={12} />,        label: "Point" },
+    ],
+    [
+      { icon: <Undo2 size={13} />,   label: "Undo", dim: true },
+      { icon: <Redo2 size={13} />,   label: "Redo", dim: true },
+    ],
+    [
+      { icon: <Download size={13} />, label: "Export" },
+      { icon: <Trash2 size={13} />,   label: "Clear", danger: true },
+    ],
   ];
+  let idx = 0;
   return (
     <div style={{ ...MAP_BG, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{
@@ -222,16 +235,25 @@ export function PreviewDrawToolbar() {
         padding: 6, border: "1px solid rgba(255,255,255,0.1)",
         boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
       }}>
-        {tools.map((t, i) => (
-          <button key={i} onClick={() => setActive(i)} style={{
-            width: 34, height: 34, borderRadius: 7, fontSize: i < 3 ? 16 : 13,
-            cursor: "pointer", border: "none",
-            background: active === i ? "rgba(59,130,246,0.25)" : "rgba(255,255,255,0.05)",
-            outline: active === i ? "1.5px solid #3B82F6" : "none",
-            color: active === i ? "#3B82F6" : "#94A3B8",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            transition: "all 0.12s",
-          }}>{t.icon}</button>
+        {toolGroups.map((group, gi) => (
+          <div key={gi}>
+            {gi > 0 && <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "2px 0" }} />}
+            {group.map((t) => {
+              const i = idx++;
+              return (
+                <button key={i} onClick={() => !t.dim && setActive(i)} style={{
+                  width: 34, height: 34, borderRadius: 7,
+                  cursor: t.dim ? "default" : "pointer", border: "none",
+                  background: active === i ? "rgba(59,130,246,0.25)" : "rgba(255,255,255,0.05)",
+                  outline: active === i ? "1.5px solid #3B82F6" : "none",
+                  color: active === i ? "#3B82F6" : t.danger ? "#F87171" : t.dim ? "rgba(255,255,255,0.2)" : "#94A3B8",
+                  opacity: t.dim ? 0.45 : 1,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 0.12s",
+                }}>{t.icon}</button>
+              );
+            })}
+          </div>
         ))}
       </div>
     </div>

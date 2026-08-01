@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type React from "react";
 import {
   MapboxMap, DrawLayer, DrawToolbar,
   BBoxSelector, MeasureTool, MeasureDisplay, ZoomControls,
 } from "mapbox-gl-kit";
 import { BoxSelect, Ruler } from "lucide-react";
-import type { DrawMode, DrawnFeature, MeasureResult, BBox } from "mapbox-gl-kit";
+import type { DrawMode, DrawnFeature, DrawLayerHandle, MeasureResult, BBox } from "mapbox-gl-kit";
 
 function ToolBtn({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
   return (
@@ -22,8 +22,11 @@ function ToolBtn({ active, onClick, icon, label }: { active: boolean; onClick: (
 }
 
 export default function DrawDemo({ token }: { token: string }) {
+  const drawRef = useRef<DrawLayerHandle>(null);
   const [mode, setMode] = useState<DrawMode>("none");
   const [features, setFeatures] = useState<DrawnFeature[]>([]);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
   const [selecting, setSelecting] = useState(false);
   const [measuring, setMeasuring] = useState(false);
   const [measureResult, setMeasureResult] = useState<MeasureResult | null>(null);
@@ -35,22 +38,31 @@ export default function DrawDemo({ token }: { token: string }) {
     <div style={{ position: "relative", height: 480 }}>
       <MapboxMap accessToken={token} initialCenter={[126.978, 37.566]} initialZoom={7}
         style={{ width: "100%", height: "100%" }}>
-        <DrawLayer mode={activeMode} features={features}
-          onDraw={(_, all) => setFeatures(all)} fillColor="#3B82F6" strokeColor="#1D4ED8" />
+        <DrawLayer
+          ref={drawRef}
+          mode={activeMode}
+          onFeaturesChange={setFeatures}
+          onHistoryChange={(u, r) => { setCanUndo(u); setCanRedo(r); }}
+          fillColor="#3B82F6"
+          strokeColor="#1D4ED8"
+        />
         <BBoxSelector active={selecting} onSelect={(b) => { setBbox(b); setSelecting(false); }} />
         <MeasureTool active={measuring} unit="nm" onMeasure={setMeasureResult} />
 
         <DrawToolbar
           mode={activeMode}
           onChange={(m) => { setMode(m); setSelecting(false); setMeasuring(false); }}
-          onClear={() => { setFeatures([]); setBbox(null); setMeasureResult(null); }}
+          drawRef={drawRef}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          featureCount={features.length}
           style={{ position: "absolute", top: 16, right: 16 }}
         />
         <div style={{ position: "absolute", top: 16, left: 16, display: "flex", flexDirection: "column", gap: 6 }}>
           <ToolBtn active={selecting} icon={<BoxSelect size={16} />} label="Select BBox"
             onClick={() => { setSelecting(s => !s); setMeasuring(false); setMode("none"); setBbox(null); }} />
           <ToolBtn active={measuring} icon={<Ruler size={16} />} label="Measure distance"
-            onClick={() => { setMeasuring(m => !m); setSelecting(false); setMode("none"); setMeasureResult(null); }} />
+            onClick={() => { setMeasuring(m => !m); setSelecting(false); setMode("none"); setMeasureResult(null); setBbox(null); }} />
         </div>
         <ZoomControls style={{ position: "absolute", bottom: 40, right: 16 }} />
         {measureResult && <MeasureDisplay result={measureResult} style={{ position: "absolute", bottom: 24, left: 16 }} />}

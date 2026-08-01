@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import RouteDemo from "./demos/RouteDemo";
 import DrawDemo from "./demos/DrawDemo";
+import RouteEditorDemo from "./demos/RouteEditorDemo";
 import ClusterDemo from "./demos/ClusterDemo";
 import TimelineDemo from "./demos/TimelineDemo";
 import {
@@ -92,17 +93,18 @@ const CATEGORIES: { label: string; color: string; items: CatItem[] }[] = [
 const FEATURES = [
   { Icon: Map,                title: "Core Map",       tags: ["MapboxMap", "GlobeToggle", "SearchBox"],     desc: "MapboxMap context provider — drop any child component inside and it wires up automatically. GlobeToggle for 3D globe. SearchBox for Mapbox Geocoding." },
   { Icon: Ship,               title: "Route & Vessel", tags: ["RouteLayer", "MarkerLayer", "ShipMarker"],    desc: "RouteLayer renders separate past (solid) and future (dashed) lines per route with hover tooltips and filtering. ShipMarker for animated vessel icons." },
-  { Icon: PenLine,            title: "Drawing Tools",  tags: ["DrawLayer", "RouteEditor", "BBoxSelector"],   desc: "DrawLayer for polygon, line, and point drawing. RouteEditor with draggable waypoints. BBoxSelector for click-and-drag region queries." },
+  { Icon: PenLine,            title: "Drawing Tools",  tags: ["DrawLayer", "RouteEditor", "BBoxSelector"],   desc: "DrawLayer with undo/redo, select mode, and live vertex editing. RouteEditor with numbered waypoints, mid-segment insertion, and distance display. BBoxSelector for click-and-drag region queries." },
   { Icon: BarChart3,          title: "Data Layers",    tags: ["ClusterLayer", "HeatmapLayer", "LayerPanel"], desc: "ClusterLayer groups nearby points into expandable bubbles. HeatmapLayer for density visualization. LayerPanel to toggle any Mapbox layer." },
   { Icon: SlidersHorizontal,  title: "Map Controls",   tags: ["ZoomControls", "CompassRose", "ScaleBar"],    desc: "Drop-in UI controls: ZoomControls (+/−), CompassRose (bearing-aware needle), ScaleBar (km / mi / NM), CoordinateDisplay, and ContextMenu." },
   { Icon: Timer,              title: "Timeline",       tags: ["TimeSlider", "interpolatePosition"],          desc: "TimeSlider for scrubbing and animating vessel playback at configurable speed. Wire onChange to interpolatePosition to drive marker positions." },
 ];
 
 const DEMOS = [
-  { id: "route",    label: "Route & Vessel", Component: RouteDemo    },
-  { id: "draw",     label: "Drawing Tools",  Component: DrawDemo     },
-  { id: "cluster",  label: "Data Layers",    Component: ClusterDemo  },
-  { id: "timeline", label: "Timeline",       Component: TimelineDemo },
+  { id: "route",    label: "Route & Vessel", Component: RouteDemo        },
+  { id: "draw",     label: "Drawing Tools",  Component: DrawDemo         },
+  { id: "editor",   label: "Route Builder",  Component: RouteEditorDemo  },
+  { id: "cluster",  label: "Data Layers",    Component: ClusterDemo      },
+  { id: "timeline", label: "Timeline",       Component: TimelineDemo     },
 ];
 
 const CODE: Record<string, string> = {
@@ -118,7 +120,7 @@ import "mapbox-gl/dist/mapbox-gl.css"`,
 
 const routes = [{
   id: "r1", label: "Busan → Osaka",
-  pastRoute: pastGeoJson, futureRoute: futureGeoJson,
+  past: pastGeoJson, future: futureGeoJson,
   visible: true, color: "#3B82F6",
 }]
 
@@ -137,20 +139,23 @@ export function ShipMap() {
 }`,
 
   draw:
-`import { useState } from "react"
+`import { useState, useRef } from "react"
 import { MapboxMap, DrawLayer, DrawToolbar } from "mapbox-gl-kit"
-import type { DrawMode, DrawnFeature } from "mapbox-gl-kit"
+import type { DrawMode, DrawLayerHandle } from "mapbox-gl-kit"
 
 export function DrawMap() {
+  const drawRef = useRef<DrawLayerHandle>(null)
   const [mode, setMode] = useState<DrawMode>("none")
-  const [features, setFeatures] = useState<DrawnFeature[]>([])
+  const [canUndo, setCanUndo] = useState(false)
+  const [canRedo, setCanRedo] = useState(false)
 
   return (
     <MapboxMap accessToken={TOKEN} style={{ width: "100%", height: 500 }}>
-      <DrawLayer mode={mode} features={features}
-        onDraw={(_, all) => setFeatures(all)} />
-      <DrawToolbar mode={mode} onChange={setMode}
-        onClear={() => setFeatures([])}
+      <DrawLayer ref={drawRef} mode={mode}
+        onFeaturesChange={(fs) => console.log(fs)}
+        onHistoryChange={(u, r) => { setCanUndo(u); setCanRedo(r) }} />
+      <DrawToolbar mode={mode} onChange={setMode} drawRef={drawRef}
+        canUndo={canUndo} canRedo={canRedo}
         style={{ position: "absolute", top: 16, right: 16 }} />
     </MapboxMap>
   )
