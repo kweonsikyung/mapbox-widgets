@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   Map, Ship, PenLine, BarChart3, SlidersHorizontal, Timer,
-  AlertTriangle,
 } from "lucide-react";
 import RouteDemo from "./demos/RouteDemo";
 import DrawDemo from "./demos/DrawDemo";
@@ -401,7 +400,7 @@ function ComponentsTab() {
   );
 }
 
-function DemoSection({ token, setToken }: { token: string; setToken: (t: string) => void }) {
+function DemoSection({ token }: { token: string }) {
   const [activeTab, setActiveTab] = useState<string>("components");
   const [mounted, setMounted] = useState(new Set<string>());
 
@@ -423,24 +422,6 @@ function DemoSection({ token, setToken }: { token: string; setToken: (t: string)
       <p style={{ textAlign: "center", color: C.muted, marginBottom: 48, fontSize: 16 }}>
         Browse all components, or jump into an interactive demo.
       </p>
-
-      {activeTab !== "components" && !token && (
-        <div style={{
-          display: "flex", alignItems: "center", gap: 10,
-          padding: "12px 16px", borderRadius: 10, marginBottom: 20,
-          background: "rgba(251,191,36,0.07)", border: "1px solid rgba(251,191,36,0.22)",
-        }}>
-          <span style={{ display: "flex", alignItems: "center", gap: 5, color: "#FCD34D", flexShrink: 0 }}>
-            <AlertTriangle size={14} /><span style={{ fontSize: 13 }}>Mapbox token</span>
-          </span>
-          <input placeholder="pk.eyJ1..." onChange={e => setToken(e.target.value)} style={{
-            flex: 1, padding: "7px 12px", borderRadius: 7, outline: "none",
-            border: "1px solid rgba(255,255,255,0.1)",
-            background: "rgba(255,255,255,0.05)",
-            color: C.text, fontSize: 13, fontFamily: "var(--mono)",
-          }} />
-        </div>
-      )}
 
       <div style={{ border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
         <div style={{ display: "flex", gap: 0, borderBottom: `1px solid ${C.border}`, background: "rgba(255,255,255,0.02)" }}>
@@ -539,7 +520,6 @@ function Footer() {
 // ─── App ────────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [token, setToken] = useState(TOKEN);
   return (
     <div style={{ background: C.bg, color: C.text, minHeight: "100vh" }}>
       <Nav />
@@ -547,7 +527,7 @@ export default function App() {
         <Hero />
         <Stats />
         <Features />
-        <DemoSection token={token} setToken={setToken} />
+        <DemoSection token={TOKEN} />
         <QuickStart />
       </main>
       <Footer />
