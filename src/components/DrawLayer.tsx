@@ -3,6 +3,7 @@
 import {
   useCallback,
   useRef,
+  useEffect,
   forwardRef,
   useImperativeHandle,
   type CSSProperties,
@@ -93,7 +94,9 @@ function toGeoJson(features: DrawnFeature[]): FeatureCollection {
       const props = { featureId: f.id, drawType: f.type };
       if (f.type === "point") return { type: "Feature", geometry: { type: "Point", coordinates: f.coordinates as Position }, properties: props };
       if (f.type === "line") return { type: "Feature", geometry: { type: "LineString", coordinates: f.coordinates as Position[] }, properties: props };
-      return { type: "Feature", geometry: { type: "Polygon", coordinates: [f.coordinates as Position[]] }, properties: props };
+      const ring = f.coordinates as Position[];
+      const closed = [...ring, ring[0]];
+      return { type: "Feature", geometry: { type: "Polygon", coordinates: [closed] }, properties: props };
     }),
   };
 }
@@ -665,6 +668,16 @@ export function DrawToolbar({
   style,
   className,
 }: DrawToolbarProps) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const tool = TOOLS.find((t) => t.key === e.key.toUpperCase());
+      if (tool) { e.preventDefault(); onChange(mode === tool.mode ? "none" : tool.mode); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [mode, onChange]);
   const base: CSSProperties = {
     width: 36, height: 36, borderRadius: 8,
     display: "flex", alignItems: "center", justifyContent: "center",

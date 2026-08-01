@@ -308,6 +308,7 @@ export const RouteEditor = forwardRef<RouteEditorHandle, RouteEditorProps>(funct
       commit(next);
       rebuildMarkers();
       refreshLine();
+      updateDistOverlay();
     },
   }), [notifyHistory, refreshLine, rebuildMarkers, updateDistOverlay, commit, cleanMarkers]);
 
