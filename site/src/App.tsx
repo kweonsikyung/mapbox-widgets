@@ -3,6 +3,15 @@ import RouteDemo from "./demos/RouteDemo";
 import DrawDemo from "./demos/DrawDemo";
 import ClusterDemo from "./demos/ClusterDemo";
 import TimelineDemo from "./demos/TimelineDemo";
+import {
+  PreviewMapboxMap, PreviewGlobeToggle, PreviewSearchBox,
+  PreviewRouteLayer, PreviewMarkerLayer, PreviewShipMarker, PreviewOverviewMap,
+  PreviewDrawLayer, PreviewDrawToolbar, PreviewRouteEditor, PreviewBBoxSelector,
+  PreviewClusterLayer, PreviewHeatmapLayer, PreviewLayerPanel, PreviewContextMenu,
+  PreviewZoomControls, PreviewCompassRose, PreviewScaleBar, PreviewCoordinateDisplay,
+  PreviewTimeSlider, PreviewMeasureTool, PreviewMeasureDisplay,
+  PreviewInterpolate, PreviewHaversine,
+} from "./ComponentPreviews";
 
 const TOKEN = (import.meta.env as Record<string, string>).VITE_MAPBOX_TOKEN ?? "";
 
@@ -18,59 +27,60 @@ const C = {
   subtle: "#475569",
 };
 
-const CATEGORIES: { label: string; color: string; items: { name: string; desc: string }[] }[] = [
+type CatItem = { name: string; desc: string; Preview: React.FC };
+const CATEGORIES: { label: string; color: string; items: CatItem[] }[] = [
   {
     label: "Core Map", color: "#6366F1",
     items: [
-      { name: "MapboxMap",        desc: "Context provider — wrap all other components inside" },
-      { name: "GlobeToggle",      desc: "Switch between globe and mercator projection" },
-      { name: "SearchBox",        desc: "Mapbox Geocoding autocomplete search" },
+      { name: "MapboxMap",        desc: "Context provider — wrap all other components inside", Preview: PreviewMapboxMap },
+      { name: "GlobeToggle",      desc: "Switch between globe and mercator projection",        Preview: PreviewGlobeToggle },
+      { name: "SearchBox",        desc: "Mapbox Geocoding autocomplete search",                Preview: PreviewSearchBox },
     ],
   },
   {
     label: "Route & Vessel", color: "#3B82F6",
     items: [
-      { name: "RouteLayer",       desc: "Render past (solid) and future (dashed) routes" },
-      { name: "MarkerLayer",      desc: "Manage many custom DOM markers declaratively" },
-      { name: "ShipMarker",       desc: "Animated ship icon with optional pulse ring" },
-      { name: "OverviewMap",      desc: "Picture-in-picture minimap synced to main view" },
+      { name: "RouteLayer",       desc: "Render past (solid) and future (dashed) routes",     Preview: PreviewRouteLayer },
+      { name: "MarkerLayer",      desc: "Manage many custom DOM markers declaratively",        Preview: PreviewMarkerLayer },
+      { name: "ShipMarker",       desc: "Animated ship icon with optional pulse ring",         Preview: PreviewShipMarker },
+      { name: "OverviewMap",      desc: "Picture-in-picture minimap synced to main view",     Preview: PreviewOverviewMap },
     ],
   },
   {
     label: "Drawing", color: "#8B5CF6",
     items: [
-      { name: "DrawLayer",        desc: "Polygon, line, and point drawing on the map" },
-      { name: "DrawToolbar",      desc: "Mode selector UI for DrawLayer" },
-      { name: "RouteEditor",      desc: "Draggable waypoint-based route builder" },
-      { name: "BBoxSelector",     desc: "Click-drag to select a bounding box region" },
+      { name: "DrawLayer",        desc: "Polygon, line, and point drawing on the map",        Preview: PreviewDrawLayer },
+      { name: "DrawToolbar",      desc: "Mode selector UI for DrawLayer",                     Preview: PreviewDrawToolbar },
+      { name: "RouteEditor",      desc: "Draggable waypoint-based route builder",             Preview: PreviewRouteEditor },
+      { name: "BBoxSelector",     desc: "Click-drag to select a bounding box region",         Preview: PreviewBBoxSelector },
     ],
   },
   {
     label: "Data Layers", color: "#10B981",
     items: [
-      { name: "ClusterLayer",     desc: "Groups nearby points into expandable bubbles" },
-      { name: "HeatmapLayer",     desc: "Density heatmap from GeoJSON point data" },
-      { name: "LayerPanel",       desc: "Toggle visibility of any Mapbox layer" },
-      { name: "ContextMenu",      desc: "Right-click context menu with custom actions" },
+      { name: "ClusterLayer",     desc: "Groups nearby points into expandable bubbles",       Preview: PreviewClusterLayer },
+      { name: "HeatmapLayer",     desc: "Density heatmap from GeoJSON point data",            Preview: PreviewHeatmapLayer },
+      { name: "LayerPanel",       desc: "Toggle visibility of any Mapbox layer",              Preview: PreviewLayerPanel },
+      { name: "ContextMenu",      desc: "Right-click context menu with custom actions",       Preview: PreviewContextMenu },
     ],
   },
   {
     label: "Map Controls", color: "#F59E0B",
     items: [
-      { name: "ZoomControls",     desc: "Zoom in / out buttons" },
-      { name: "CompassRose",      desc: "Bearing-aware compass needle" },
-      { name: "ScaleBar",         desc: "Distance scale in km, mi, or nautical miles" },
-      { name: "CoordinateDisplay",desc: "Live cursor coordinates display" },
+      { name: "ZoomControls",     desc: "Zoom in / out buttons",                             Preview: PreviewZoomControls },
+      { name: "CompassRose",      desc: "Bearing-aware compass needle",                      Preview: PreviewCompassRose },
+      { name: "ScaleBar",         desc: "Distance scale in km, mi, or nautical miles",       Preview: PreviewScaleBar },
+      { name: "CoordinateDisplay",desc: "Live cursor coordinates display",                   Preview: PreviewCoordinateDisplay },
     ],
   },
   {
     label: "Timeline & Measure", color: "#EF4444",
     items: [
-      { name: "TimeSlider",       desc: "Scrub and animate a time range with playback" },
-      { name: "MeasureTool",      desc: "Click-to-measure distance on the map" },
-      { name: "MeasureDisplay",   desc: "Formatted readout for MeasureTool results" },
-      { name: "interpolatePosition", desc: "Util — interpolate lng/lat along a path at t∈[0,1]" },
-      { name: "haversineDistance",   desc: "Util — great-circle distance between two points" },
+      { name: "TimeSlider",          desc: "Scrub and animate a time range with playback",       Preview: PreviewTimeSlider },
+      { name: "MeasureTool",         desc: "Click-to-measure distance on the map",               Preview: PreviewMeasureTool },
+      { name: "MeasureDisplay",      desc: "Formatted readout for MeasureTool results",          Preview: PreviewMeasureDisplay },
+      { name: "interpolatePosition", desc: "Util — interpolate lng/lat along a path at t∈[0,1]",Preview: PreviewInterpolate },
+      { name: "haversineDistance",   desc: "Util — great-circle distance between two points",    Preview: PreviewHaversine },
     ],
   },
 ];
@@ -321,55 +331,58 @@ function Features() {
   );
 }
 
+function ComponentCard({ item, color }: { item: CatItem; color: string }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      style={{
+        borderRadius: 12, overflow: "hidden",
+        border: `1px solid ${hovered ? color + "50" : "rgba(255,255,255,0.07)"}`,
+        background: hovered ? color + "0a" : "rgba(255,255,255,0.025)",
+        transition: "border-color 0.15s, background 0.15s",
+        display: "flex", flexDirection: "column",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {/* visual preview */}
+      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <item.Preview />
+      </div>
+      {/* name + desc */}
+      <div style={{ padding: "10px 13px 12px" }}>
+        <div style={{ fontFamily: "var(--mono)", fontSize: 12.5, fontWeight: 600, color: C.text, marginBottom: 4 }}>
+          {item.name}
+        </div>
+        <div style={{ fontSize: 11, color: C.subtle, lineHeight: 1.5 }}>{item.desc}</div>
+      </div>
+    </div>
+  );
+}
+
 function ComponentsTab() {
   const total = CATEGORIES.reduce((s, c) => s + c.items.length, 0);
   return (
-    <div style={{ padding: "28px 24px 32px" }}>
-      <p style={{ fontSize: 13, color: C.subtle, marginBottom: 24 }}>
+    <div style={{ padding: "28px 24px 36px" }}>
+      <p style={{ fontSize: 13, color: C.subtle, marginBottom: 28 }}>
         {total} exports — components, hooks, and utilities
       </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
         {CATEGORIES.map(cat => (
           <div key={cat.label}>
-            <div style={{
-              display: "inline-flex", alignItems: "center", gap: 7,
-              marginBottom: 12,
-            }}>
-              <span style={{
-                width: 8, height: 8, borderRadius: "50%",
-                background: cat.color, flexShrink: 0,
-              }} />
-              <span style={{ fontSize: 12, fontWeight: 600, color: cat.color, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 7, marginBottom: 14 }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: cat.color, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, fontWeight: 700, color: cat.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 {cat.label}
               </span>
             </div>
             <div style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-              gap: 8,
+              gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))",
+              gap: 10,
             }}>
               {cat.items.map(item => (
-                <div key={item.name} style={{
-                  padding: "12px 14px", borderRadius: 10,
-                  background: "rgba(255,255,255,0.03)",
-                  border: `1px solid rgba(255,255,255,0.07)`,
-                  transition: "border-color 0.12s, background 0.12s",
-                }}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLDivElement).style.borderColor = cat.color + "44";
-                    (e.currentTarget as HTMLDivElement).style.background = cat.color + "0d";
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.07)";
-                    (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)";
-                  }}
-                >
-                  <div style={{
-                    fontFamily: "var(--mono)", fontSize: 13, fontWeight: 600,
-                    color: C.text, marginBottom: 5,
-                  }}>{item.name}</div>
-                  <div style={{ fontSize: 11.5, color: C.subtle, lineHeight: 1.55 }}>{item.desc}</div>
-                </div>
+                <ComponentCard key={item.name} item={item} color={cat.color} />
               ))}
             </div>
           </div>
