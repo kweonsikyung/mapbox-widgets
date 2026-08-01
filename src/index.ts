@@ -27,6 +27,12 @@ export { RouteEditor } from "./components/RouteEditor";
 export { BBoxSelector } from "./components/BBoxSelector";
 export { MeasureTool, MeasureDisplay } from "./components/MeasureTool";
 
+// ─── Maritime ─────────────────────────────────────────────────────────────────
+export { ZoneLayer } from "./components/ZoneLayer";
+export { SARGrid } from "./components/SARGrid";
+export type { ZoneType, Zone, ZoneLayerProps } from "./components/ZoneLayer";
+export type { SARCellStatus, SARCell, SARGridProps } from "./components/SARGrid";
+
 // ─── Time & Animation ─────────────────────────────────────────────────────────
 export { TimeSlider } from "./components/TimeSlider";
 

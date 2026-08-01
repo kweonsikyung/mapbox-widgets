@@ -36,6 +36,12 @@ export interface RouteEditorProps {
   endColor?: string;
   /** Show live distance overlay along the route (default: true) */
   showDistance?: boolean;
+  /** Show bearing + travel time overlays on each segment */
+  showBearing?: boolean;
+  /** Vessel speed in knots — used to calculate travel time when showBearing is true */
+  speedKnots?: number;
+  /** Departure time — used to compute per-segment ETAs */
+  departureTime?: Date;
 }
 
 // ─── Source / layer IDs ─────────────────────────────────────────────────────────
@@ -66,6 +72,22 @@ function fmtDist(km: number): string {
   if (km < 1) return `${(km * 1000).toFixed(0)} m`;
   if (km < 10) return `${km.toFixed(2)} km`;
   return `${km.toFixed(1)} km`;
+}
+
+/** Bearing in degrees (true north) from point a to point b */
+function bearingDeg(a: [number, number], b: [number, number]): number {
+  const φ1 = a[1] * Math.PI / 180, φ2 = b[1] * Math.PI / 180;
+  const Δλ = (b[0] - a[0]) * Math.PI / 180;
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
+}
+
+function fmtTime(hours: number): string {
+  const h = Math.floor(hours);
+  const m = Math.round((hours - h) * 60);
+  if (h >= 1) return `${h}h ${m}m`;
+  return `${Math.round(hours * 60)}m`;
 }
 
 /** Project lngLat point p onto the line segment [a, b] */
@@ -126,6 +148,9 @@ export const RouteEditor = forwardRef<RouteEditorHandle, RouteEditorProps>(funct
     startColor = "#10B981",
     endColor = "#EF4444",
     showDistance = true,
+    showBearing = false,
+    speedKnots,
+    departureTime,
   },
   ref
 ) {
@@ -134,6 +159,7 @@ export const RouteEditor = forwardRef<RouteEditorHandle, RouteEditorProps>(funct
   // ── Internal state ────────────────────────────────────────────────────────────
   const markersRef = useRef<ManagedMarker[]>([]);
   const distElRef = useRef<HTMLDivElement | null>(null);
+  const bearingElsRef = useRef<HTMLDivElement[]>([]);
 
   const histRef = useRef<{
     past: [number, number][][];
@@ -186,6 +212,63 @@ export const RouteEditor = forwardRef<RouteEditorHandle, RouteEditorProps>(funct
     el.style.left = `${px.x - el.offsetWidth / 2}px`;
     el.style.top = `${px.y - 38}px`;
   }, [map]);
+
+  // ── Bearing overlays ──────────────────────────────────────────────────────────
+
+  const cleanBearingEls = useCallback(() => {
+    bearingElsRef.current.forEach((el) => el.remove());
+    bearingElsRef.current = [];
+  }, []);
+
+  const updateBearingOverlays = useCallback(() => {
+    if (!map || !showBearing) return;
+    const pts = histRef.current.current;
+    const needed = pts.length >= 2 ? pts.length - 1 : 0;
+
+    // Grow or shrink the array of bearing divs as needed
+    while (bearingElsRef.current.length < needed) {
+      const el = document.createElement("div");
+      Object.assign(el.style, {
+        position: "absolute", pointerEvents: "none",
+        background: "rgba(15,15,15,.82)", color: "#fff",
+        padding: "3px 8px", borderRadius: "6px",
+        fontSize: "11px", fontFamily: "system-ui,sans-serif",
+        whiteSpace: "nowrap", zIndex: "5",
+        boxShadow: "0 2px 8px rgba(0,0,0,.25)",
+      });
+      map.getContainer().appendChild(el);
+      bearingElsRef.current.push(el);
+    }
+    while (bearingElsRef.current.length > needed) {
+      bearingElsRef.current.pop()?.remove();
+    }
+
+    if (needed === 0) return;
+
+    // Cumulative departure time tracking
+    let cumulativeMs = 0;
+
+    for (let i = 0; i < needed; i++) {
+      const a = pts[i], b = pts[i + 1];
+      const brg = bearingDeg(a, b);
+      const distKm = haversineDistance(a, b, "km");
+
+      let text = `${brg.toFixed(0)}°T`;
+      if (speedKnots && speedKnots > 0) {
+        const hours = distKm / (speedKnots * 1.852);
+        text += `  ·  ${fmtTime(hours)}`;
+        cumulativeMs += hours * 3600000;
+      }
+
+      const midLng = (a[0] + b[0]) / 2;
+      const midLat = (a[1] + b[1]) / 2;
+      const px = map.project([midLng, midLat]);
+      const el = bearingElsRef.current[i];
+      el.textContent = text;
+      el.style.left = `${px.x - el.offsetWidth / 2}px`;
+      el.style.top = `${px.y - 38}px`;
+    }
+  }, [map, showBearing, speedKnots]);
 
   // ── Marker rebuild ────────────────────────────────────────────────────────────
 
@@ -252,6 +335,7 @@ export const RouteEditor = forwardRef<RouteEditorHandle, RouteEditorProps>(funct
         histRef.current.current = next;
         refreshLine();
         updateDistOverlay();
+        updateBearingOverlays();
       });
 
       marker.on("dragend", () => {
@@ -265,11 +349,15 @@ export const RouteEditor = forwardRef<RouteEditorHandle, RouteEditorProps>(funct
         rebuildMarkers();
         refreshLine();
         updateDistOverlay();
+        updateBearingOverlays();
       });
 
       markersRef.current.push({ marker, root });
     });
-  }, [map, active, waypointColor, startColor, endColor, refreshLine, updateDistOverlay, commit, cleanMarkers]);
+
+    // Update bearing overlays after rebuilding markers
+    updateBearingOverlays();
+  }, [map, active, waypointColor, startColor, endColor, refreshLine, updateDistOverlay, updateBearingOverlays, commit, cleanMarkers]);
 
   // ── Imperative handle ─────────────────────────────────────────────────────────
 
@@ -284,6 +372,7 @@ export const RouteEditor = forwardRef<RouteEditorHandle, RouteEditorProps>(funct
       refreshLine();
       rebuildMarkers();
       updateDistOverlay();
+      updateBearingOverlays();
     },
     redo() {
       const h = histRef.current;
@@ -295,11 +384,13 @@ export const RouteEditor = forwardRef<RouteEditorHandle, RouteEditorProps>(funct
       refreshLine();
       rebuildMarkers();
       updateDistOverlay();
+      updateBearingOverlays();
     },
     clear() {
       if (!histRef.current.current.length) return;
       commit([]);
       cleanMarkers();
+      cleanBearingEls();
       refreshLine();
       updateDistOverlay();
     },
@@ -309,8 +400,9 @@ export const RouteEditor = forwardRef<RouteEditorHandle, RouteEditorProps>(funct
       rebuildMarkers();
       refreshLine();
       updateDistOverlay();
+      updateBearingOverlays();
     },
-  }), [notifyHistory, refreshLine, rebuildMarkers, updateDistOverlay, commit, cleanMarkers]);
+  }), [notifyHistory, refreshLine, rebuildMarkers, updateDistOverlay, updateBearingOverlays, commit, cleanMarkers, cleanBearingEls]);
 
   // ── Line layer setup ──────────────────────────────────────────────────────────
 
@@ -349,21 +441,25 @@ export const RouteEditor = forwardRef<RouteEditorHandle, RouteEditorProps>(funct
       map.getContainer().appendChild(distEl);
       distElRef.current = distEl;
 
-      // Keep distance overlay positioned on map pan/zoom
-      const onMove = () => updateDistOverlay();
-      if (showDistance) map.on("move", onMove);
+      // Keep distance + bearing overlays positioned on map pan/zoom
+      const onMove = () => {
+        updateDistOverlay();
+        updateBearingOverlays();
+      };
+      if (showDistance || showBearing) map.on("move", onMove);
 
       return () => {
         if (map.getLayer(HIT)) map.removeLayer(HIT);
         if (map.getLayer(LINE)) map.removeLayer(LINE);
         if (map.getSource(SRC)) map.removeSource(SRC);
-        if (showDistance) map.off("move", onMove);
+        if (showDistance || showBearing) map.off("move", onMove);
         distEl.remove();
         distElRef.current = null;
         cleanMarkers();
+        cleanBearingEls();
       };
-    }, [map, lineColor, showDistance, updateDistOverlay, cleanMarkers]),
-    [lineColor, showDistance]
+    }, [map, lineColor, showDistance, showBearing, updateDistOverlay, updateBearingOverlays, cleanMarkers, cleanBearingEls]),
+    [lineColor, showDistance, showBearing]
   );
 
   // ── Click handler ─────────────────────────────────────────────────────────────
@@ -401,6 +497,7 @@ export const RouteEditor = forwardRef<RouteEditorHandle, RouteEditorProps>(funct
           rebuildMarkers();
           refreshLine();
           updateDistOverlay();
+          updateBearingOverlays();
           return;
         }
 
@@ -410,6 +507,7 @@ export const RouteEditor = forwardRef<RouteEditorHandle, RouteEditorProps>(funct
         rebuildMarkers();
         refreshLine();
         updateDistOverlay();
+        updateBearingOverlays();
       };
 
       const onKeyDown = (e: KeyboardEvent) => {
@@ -418,6 +516,7 @@ export const RouteEditor = forwardRef<RouteEditorHandle, RouteEditorProps>(funct
           rebuildMarkers();
           refreshLine();
           updateDistOverlay();
+          updateBearingOverlays();
         }
       };
 
@@ -431,7 +530,7 @@ export const RouteEditor = forwardRef<RouteEditorHandle, RouteEditorProps>(funct
         window.removeEventListener("keydown", onKeyDown);
         map.getCanvas().style.cursor = "";
       };
-    }, [map, active, commit, rebuildMarkers, refreshLine, updateDistOverlay]),
+    }, [map, active, commit, rebuildMarkers, refreshLine, updateDistOverlay, updateBearingOverlays]),
     [active]
   );
 
@@ -440,6 +539,7 @@ export const RouteEditor = forwardRef<RouteEditorHandle, RouteEditorProps>(funct
   useMapReady(map, isLoaded, rebuildMarkers, [active, waypointColor, startColor, endColor]);
   useMapReady(map, isLoaded, refreshLine, []);
   useMapReady(map, isLoaded, updateDistOverlay, []);
+  useMapReady(map, isLoaded, updateBearingOverlays, [showBearing, speedKnots, departureTime]);
 
   return null;
 });
