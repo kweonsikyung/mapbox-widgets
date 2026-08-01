@@ -4,6 +4,7 @@ import {
   MapboxMap, RouteLayer, MarkerLayer, ShipMarker,
   ZoomControls, CompassRose, ScaleBar, GlobeToggle, ContextMenu,
 } from "mapbox-gl-kit";
+import { ClipboardCopy, PlaneTakeoff } from "lucide-react";
 import type { Route } from "mapbox-gl-kit";
 
 const PAST: FeatureCollection = {
@@ -36,8 +37,8 @@ export default function RouteDemo({ token }: { token: string }) {
         <ContextMenu
           enabled
           actions={[
-            { id: "copy", label: "Copy coordinates", icon: "📋" },
-            { id: "fly",  label: "Fly to here",      icon: "✈️" },
+            { id: "copy", label: "Copy coordinates", icon: <ClipboardCopy size={13} /> },
+            { id: "fly",  label: "Fly to here",      icon: <PlaneTakeoff size={13} /> },
           ]}
           onAction={({ lngLat, action }) => {
             if (action.id === "copy")

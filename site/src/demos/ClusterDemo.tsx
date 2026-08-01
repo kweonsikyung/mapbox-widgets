@@ -5,6 +5,7 @@ import {
   LayerPanel, ZoomControls, CoordinateDisplay,
 } from "mapbox-gl-kit";
 import type { LayerItem } from "mapbox-gl-kit";
+import { Ship, Flame, X } from "lucide-react";
 
 const DATA: FeatureCollection = {
   type: "FeatureCollection",
@@ -16,8 +17,8 @@ const DATA: FeatureCollection = {
 };
 
 const INITIAL_LAYERS: LayerItem[] = [
-  { id: "mbw-cluster-circles", label: "Vessel Clusters", icon: "🚢", visible: true },
-  { id: "mbw-heatmap-layer",   label: "Traffic Heatmap", icon: "🔥", visible: false },
+  { id: "mbw-cluster-circles", label: "Vessel Clusters", icon: <Ship size={13} />, visible: true },
+  { id: "mbw-heatmap-layer",   label: "Traffic Heatmap", icon: <Flame size={13} />, visible: false },
 ];
 
 export default function ClusterDemo({ token }: { token: string }) {
@@ -48,13 +49,13 @@ export default function ClusterDemo({ token }: { token: string }) {
           color: "#F1F5F9", border: "1px solid rgba(255,255,255,0.1)",
           display: "flex", gap: 12, alignItems: "center", whiteSpace: "nowrap",
         }}>
-          <span>🚢 {selected.name}</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 5 }}><Ship size={13} /> {selected.name}</span>
           <span style={{ color: "#64748B", fontFamily: "var(--mono)", fontSize: 11 }}>
             {selected.lngLat[1].toFixed(3)}°N {selected.lngLat[0].toFixed(3)}°E
           </span>
           <button onClick={() => setSelected(null)}
-            style={{ background: "none", border: "none", color: "#475569", cursor: "pointer", fontSize: 14 }}>
-            ✕
+            style={{ background: "none", border: "none", color: "#475569", cursor: "pointer", display: "flex" }}>
+            <X size={14} />
           </button>
         </div>
       )}

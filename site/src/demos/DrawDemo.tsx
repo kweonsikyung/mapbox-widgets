@@ -1,11 +1,13 @@
 import { useState } from "react";
+import type React from "react";
 import {
   MapboxMap, DrawLayer, DrawToolbar,
   BBoxSelector, MeasureTool, MeasureDisplay, ZoomControls,
 } from "mapbox-gl-kit";
+import { BoxSelect, Ruler } from "lucide-react";
 import type { DrawMode, DrawnFeature, MeasureResult, BBox } from "mapbox-gl-kit";
 
-function ToolBtn({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: string; label: string }) {
+function ToolBtn({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
   return (
     <button title={label} onClick={onClick} style={{
       width: 36, height: 36, borderRadius: 8, fontSize: 16,
@@ -45,9 +47,9 @@ export default function DrawDemo({ token }: { token: string }) {
           style={{ position: "absolute", top: 16, right: 16 }}
         />
         <div style={{ position: "absolute", top: 16, left: 16, display: "flex", flexDirection: "column", gap: 6 }}>
-          <ToolBtn active={selecting} icon="⬜" label="Select BBox"
+          <ToolBtn active={selecting} icon={<BoxSelect size={16} />} label="Select BBox"
             onClick={() => { setSelecting(s => !s); setMeasuring(false); setMode("none"); setBbox(null); }} />
-          <ToolBtn active={measuring} icon="📏" label="Measure distance"
+          <ToolBtn active={measuring} icon={<Ruler size={16} />} label="Measure distance"
             onClick={() => { setMeasuring(m => !m); setSelecting(false); setMode("none"); setMeasureResult(null); }} />
         </div>
         <ZoomControls style={{ position: "absolute", bottom: 40, right: 16 }} />

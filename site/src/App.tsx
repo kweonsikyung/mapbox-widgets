@@ -1,4 +1,8 @@
 import { useState } from "react";
+import {
+  Map, Ship, PenLine, BarChart3, SlidersHorizontal, Timer,
+  AlertTriangle,
+} from "lucide-react";
 import RouteDemo from "./demos/RouteDemo";
 import DrawDemo from "./demos/DrawDemo";
 import ClusterDemo from "./demos/ClusterDemo";
@@ -86,12 +90,12 @@ const CATEGORIES: { label: string; color: string; items: CatItem[] }[] = [
 ];
 
 const FEATURES = [
-  { icon: "🗺️", title: "Core Map",       tags: ["MapboxMap", "GlobeToggle", "SearchBox"],     desc: "MapboxMap context provider — drop any child component inside and it wires up automatically. GlobeToggle for 3D globe. SearchBox for Mapbox Geocoding." },
-  { icon: "🚢", title: "Route & Vessel", tags: ["RouteLayer", "MarkerLayer", "ShipMarker"],    desc: "RouteLayer renders separate past (solid) and future (dashed) lines per route with hover tooltips and filtering. ShipMarker for animated vessel icons." },
-  { icon: "✏️", title: "Drawing Tools",  tags: ["DrawLayer", "RouteEditor", "BBoxSelector"],   desc: "DrawLayer for polygon, line, and point drawing. RouteEditor with draggable waypoints. BBoxSelector for click-and-drag region queries." },
-  { icon: "📊", title: "Data Layers",    tags: ["ClusterLayer", "HeatmapLayer", "LayerPanel"], desc: "ClusterLayer groups nearby points into expandable bubbles. HeatmapLayer for density visualization. LayerPanel to toggle any Mapbox layer." },
-  { icon: "🎛️", title: "Map Controls",   tags: ["ZoomControls", "CompassRose", "ScaleBar"],    desc: "Drop-in UI controls: ZoomControls (+/−), CompassRose (bearing-aware needle), ScaleBar (km / mi / NM), CoordinateDisplay, and ContextMenu." },
-  { icon: "⏱️", title: "Timeline",       tags: ["TimeSlider", "interpolatePosition"],          desc: "TimeSlider for scrubbing and animating vessel playback at configurable speed. Wire onChange to interpolatePosition to drive marker positions." },
+  { Icon: Map,                title: "Core Map",       tags: ["MapboxMap", "GlobeToggle", "SearchBox"],     desc: "MapboxMap context provider — drop any child component inside and it wires up automatically. GlobeToggle for 3D globe. SearchBox for Mapbox Geocoding." },
+  { Icon: Ship,               title: "Route & Vessel", tags: ["RouteLayer", "MarkerLayer", "ShipMarker"],    desc: "RouteLayer renders separate past (solid) and future (dashed) lines per route with hover tooltips and filtering. ShipMarker for animated vessel icons." },
+  { Icon: PenLine,            title: "Drawing Tools",  tags: ["DrawLayer", "RouteEditor", "BBoxSelector"],   desc: "DrawLayer for polygon, line, and point drawing. RouteEditor with draggable waypoints. BBoxSelector for click-and-drag region queries." },
+  { Icon: BarChart3,          title: "Data Layers",    tags: ["ClusterLayer", "HeatmapLayer", "LayerPanel"], desc: "ClusterLayer groups nearby points into expandable bubbles. HeatmapLayer for density visualization. LayerPanel to toggle any Mapbox layer." },
+  { Icon: SlidersHorizontal,  title: "Map Controls",   tags: ["ZoomControls", "CompassRose", "ScaleBar"],    desc: "Drop-in UI controls: ZoomControls (+/−), CompassRose (bearing-aware needle), ScaleBar (km / mi / NM), CoordinateDisplay, and ContextMenu." },
+  { Icon: Timer,              title: "Timeline",       tags: ["TimeSlider", "interpolatePosition"],          desc: "TimeSlider for scrubbing and animating vessel playback at configurable speed. Wire onChange to interpolatePosition to drive marker positions." },
 ];
 
 const DEMOS = [
@@ -167,14 +171,14 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
   );
 }
 
-function FeatureCard({ icon, title, desc, tags }: typeof FEATURES[0]) {
+function FeatureCard({ Icon, title, desc, tags }: typeof FEATURES[0]) {
   const [h, setH] = useState(false);
   return (
     <div style={{ padding: 24, borderRadius: 14, transition: "background 0.15s, border-color 0.15s",
       background: h ? C.bgCardHover : C.bgCard,
       border: `1px solid ${h ? C.borderHover : C.border}` }}
       onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}>
-      <div style={{ fontSize: 30, marginBottom: 14 }}>{icon}</div>
+      <div style={{ marginBottom: 14 }}><Icon size={28} color={C.accent} strokeWidth={1.5} /></div>
       <div style={{ fontSize: 16, fontWeight: 600, color: C.text, marginBottom: 8 }}>{title}</div>
       <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.65, marginBottom: 16 }}>{desc}</div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -421,7 +425,9 @@ function DemoSection({ token, setToken }: { token: string; setToken: (t: string)
           padding: "12px 16px", borderRadius: 10, marginBottom: 20,
           background: "rgba(251,191,36,0.07)", border: "1px solid rgba(251,191,36,0.22)",
         }}>
-          <span style={{ fontSize: 14, color: "#FCD34D", flexShrink: 0 }}>⚠️ Mapbox token</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 5, color: "#FCD34D", flexShrink: 0 }}>
+            <AlertTriangle size={14} /><span style={{ fontSize: 13 }}>Mapbox token</span>
+          </span>
           <input placeholder="pk.eyJ1..." onChange={e => setToken(e.target.value)} style={{
             flex: 1, padding: "7px 12px", borderRadius: 7, outline: "none",
             border: "1px solid rgba(255,255,255,0.1)",

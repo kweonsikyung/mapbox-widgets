@@ -1,4 +1,10 @@
 import { useState, useEffect, useRef } from "react";
+import {
+  Globe, Map, Search,
+  Ship, Layers, Flame, Anchor,
+  ClipboardCopy, PlaneTakeoff, MapPin, Ruler,
+  Pentagon, Minus, Circle, X,
+} from "lucide-react";
 
 const MAP_BG: React.CSSProperties = {
   width: "100%", height: 130, position: "relative", overflow: "hidden",
@@ -37,7 +43,7 @@ export function PreviewGlobeToggle() {
   return (
     <div style={{ ...MAP_BG, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {[{ label: "🌍  Globe", on: globe }, { label: "🗺️  Map", on: !globe }].map((b, i) => (
+        {[{ label: "Globe", icon: <Globe size={13}/>, on: globe }, { label: "Map", icon: <Map size={13}/>, on: !globe }].map((b, i) => (
           <button key={i} onClick={() => setGlobe(i === 0)} style={{
             padding: "7px 18px", borderRadius: 7, fontSize: 12, cursor: "pointer", border: "none",
             background: b.on ? "#3B82F6" : "rgba(255,255,255,0.06)",
@@ -45,7 +51,9 @@ export function PreviewGlobeToggle() {
             fontWeight: b.on ? 600 : 400,
             boxShadow: b.on ? "0 2px 8px rgba(59,130,246,0.4)" : "none",
             transition: "all 0.15s",
-          }}>{b.label}</button>
+          }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 5 }}>{b.icon}{b.label}</span>
+          </button>
         ))}
       </div>
     </div>
@@ -60,10 +68,7 @@ export function PreviewSearchBox() {
         background: "rgba(255,255,255,0.92)", borderRadius: 8,
         padding: "8px 12px", boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
       }}>
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-          <circle cx="6.5" cy="6.5" r="5" stroke="#94A3B8" strokeWidth="1.5"/>
-          <path d="M10.5 10.5L14 14" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
+        <Search size={13} color="#94A3B8" />
         <span style={{ fontSize: 12, color: "#94A3B8" }}>Search location…</span>
       </div>
       <div style={{
@@ -204,10 +209,10 @@ export function PreviewDrawLayer() {
 export function PreviewDrawToolbar() {
   const [active, setActive] = useState(1);
   const tools = [
-    { icon: "⬡", label: "Polygon" },
-    { icon: "╱", label: "Line" },
-    { icon: "•", label: "Point" },
-    { icon: "✕", label: "Clear" },
+    { icon: <Pentagon size={15} />,  label: "Polygon" },
+    { icon: <Minus size={15} />,     label: "Line" },
+    { icon: <Circle size={13} />,    label: "Point" },
+    { icon: <X size={14} />,         label: "Clear" },
   ];
   return (
     <div style={{ ...MAP_BG, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -337,9 +342,9 @@ export function PreviewHeatmapLayer() {
 
 export function PreviewLayerPanel() {
   const [layers, setLayers] = useState([
-    { label: "Vessel Clusters", icon: "🚢", on: true },
-    { label: "Traffic Heatmap", icon: "🔥", on: false },
-    { label: "Port Markers",    icon: "⚓", on: true },
+    { label: "Vessel Clusters", icon: <Ship size={13} />,   on: true },
+    { label: "Traffic Heatmap", icon: <Flame size={13} />,  on: false },
+    { label: "Port Markers",    icon: <Anchor size={13} />, on: true },
   ]);
   return (
     <div style={{ ...MAP_BG, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -354,7 +359,7 @@ export function PreviewLayerPanel() {
         {layers.map((l, i) => (
           <div key={i} onClick={() => setLayers(prev => prev.map((x, j) => j === i ? { ...x, on: !x.on } : x))}
             style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", cursor: "pointer" }}>
-            <span style={{ fontSize: 13 }}>{l.icon}</span>
+            <span style={{ display: "flex", color: l.on ? "#94A3B8" : "#475569" }}>{l.icon}</span>
             <span style={{ flex: 1, fontSize: 11, color: l.on ? "#F1F5F9" : "#475569" }}>{l.label}</span>
             <div style={{
               width: 28, height: 16, borderRadius: 8,
@@ -376,10 +381,10 @@ export function PreviewLayerPanel() {
 
 export function PreviewContextMenu() {
   const items = [
-    { icon: "📋", label: "Copy coordinates" },
-    { icon: "✈️", label: "Fly to here" },
-    { icon: "📍", label: "Add marker" },
-    { icon: "📏", label: "Measure from here", divider: true },
+    { icon: <ClipboardCopy size={12} />, label: "Copy coordinates" },
+    { icon: <PlaneTakeoff size={12} />, label: "Fly to here" },
+    { icon: <MapPin size={12} />,       label: "Add marker" },
+    { icon: <Ruler size={12} />,        label: "Measure from here", divider: true },
   ];
   return (
     <div style={{ ...MAP_BG, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -398,7 +403,7 @@ export function PreviewContextMenu() {
               background: i === 0 ? "rgba(59,130,246,0.12)" : "transparent",
               cursor: "pointer",
             }}>
-              <span>{item.icon}</span>
+              <span style={{ display: "flex" }}>{item.icon}</span>
               <span>{item.label}</span>
             </div>
           </div>
