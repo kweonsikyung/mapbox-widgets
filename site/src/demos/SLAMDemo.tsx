@@ -18,6 +18,7 @@ import type {
   PoseEdge,
   SensorConfig,
 } from "mapbox-gl-kit";
+import { Play, Pause, Activity, Eye, Navigation } from "lucide-react";
 
 // ─── Route (Seoul urban loop) ─────────────────────────────────────────────────
 
@@ -341,269 +342,152 @@ export default function SLAMDemo({ token }: { token: string }) {
         {/* ── Controls panel ──────────────────────────────────────────────── */}
         <div
           style={{
-            position: "absolute",
-            top: 12,
-            left: 12,
-            background: "rgba(15,23,42,0.90)",
-            backdropFilter: "blur(10px)",
-            borderRadius: 12,
-            padding: "12px 14px",
+            position: "absolute", top: 12, left: 12,
+            background: "rgba(15,23,42,0.90)", backdropFilter: "blur(12px)",
+            borderRadius: 12, padding: "12px 14px",
             border: "1px solid rgba(255,255,255,0.1)",
-            minWidth: 200,
-            color: "#F1F5F9",
-            fontSize: 12,
-            lineHeight: 1.7,
-            userSelect: "none",
+            minWidth: 210, color: "#F1F5F9", fontSize: 12,
+            lineHeight: 1.7, userSelect: "none",
+            boxShadow: "0 8px 32px rgba(0,0,0,.6)",
           }}
         >
-          {/* Playback */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+          {/* ── Playback row ── */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
             <button
               onClick={() => setPlaying((p) => !p)}
               style={{
-                padding: "4px 12px",
-                borderRadius: 6,
+                display: "flex", alignItems: "center", gap: 5,
+                padding: "5px 12px", borderRadius: 6, cursor: "pointer",
                 border: "1px solid rgba(255,255,255,0.15)",
-                background: playing
-                  ? "rgba(59,130,246,0.25)"
-                  : "rgba(255,255,255,0.06)",
-                color: "#F1F5F9",
-                cursor: "pointer",
-                fontSize: 12,
-                fontWeight: 600,
+                background: playing ? "rgba(59,130,246,0.25)" : "rgba(255,255,255,0.06)",
+                color: "#F1F5F9", fontSize: 12, fontWeight: 600,
               }}
             >
-              {playing ? "⏸ Pause" : "▶ Play"}
+              {playing ? <Pause size={12} /> : <Play size={12} />}
+              {playing ? "Pause" : "Play"}
             </button>
-            <span style={{ color: "#94A3B8" }}>Speed:</span>
-            {([1, 2, 4] as const).map((s) => (
-              <button
-                key={s}
-                onClick={() => setSpeedMult(s)}
-                style={{
-                  padding: "3px 8px",
-                  borderRadius: 5,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background:
-                    speedMult === s
-                      ? "rgba(99,102,241,0.35)"
-                      : "rgba(255,255,255,0.05)",
-                  color: speedMult === s ? "#A5B4FC" : "#94A3B8",
-                  cursor: "pointer",
-                  fontSize: 11,
-                  fontWeight: speedMult === s ? 700 : 400,
-                }}
-              >
-                {s}x
-              </button>
+            <div style={{ display: "flex", gap: 4, marginLeft: "auto" }}>
+              {([1, 2, 4] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setSpeedMult(s)}
+                  style={{
+                    padding: "4px 8px", borderRadius: 5, cursor: "pointer",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: speedMult === s ? "rgba(99,102,241,0.35)" : "rgba(255,255,255,0.05)",
+                    color: speedMult === s ? "#A5B4FC" : "#64748B",
+                    fontSize: 11, fontWeight: speedMult === s ? 700 : 400,
+                  }}
+                >
+                  {s}×
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Visualization toggles ── */}
+          <PanelSection icon={<Eye size={10} />} label="Visualizations">
+            {[
+              { label: "Occupancy Grid", val: showOcc, set: setShowOcc, color: "#94A3B8" },
+              { label: "Sensor FOV",     val: showFov, set: setShowFov, color: "#3B82F6" },
+              { label: "Pose Graph",     val: showPose, set: setShowPose, color: "#F59E0B" },
+              { label: "Uncertainty",    val: showTube, set: setShowTube, color: "#6366F1" },
+            ].map(({ label, val, set, color }) => (
+              <label key={label} style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer", marginBottom: 3 }}>
+                <input
+                  type="checkbox" checked={val}
+                  onChange={(e) => set(e.target.checked)}
+                  style={{ accentColor: color, cursor: "pointer" }}
+                />
+                <span style={{ fontSize: 11.5, color: val ? "#CBD5E1" : "#475569" }}>{label}</span>
+              </label>
             ))}
-          </div>
+          </PanelSection>
 
-          {/* Visualization toggles */}
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: "#64748B",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              marginBottom: 5,
-            }}
-          >
-            Visualizations
-          </div>
-          {[
-            { label: "Occupancy Grid", val: showOcc, set: setShowOcc },
-            { label: "Sensor FOV", val: showFov, set: setShowFov },
-            { label: "Pose Graph", val: showPose, set: setShowPose },
-            { label: "Uncertainty Tube", val: showTube, set: setShowTube },
-          ].map(({ label, val, set }) => (
-            <label
-              key={label}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 7,
-                cursor: "pointer",
-                marginBottom: 2,
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={val}
-                onChange={(e) => set(e.target.checked)}
-                style={{ accentColor: "#6366F1", cursor: "pointer" }}
-              />
-              <span style={{ color: "#CBD5E1" }}>{label}</span>
-            </label>
-          ))}
+          {/* ── Legend ── */}
+          <PanelSection icon={<Activity size={10} />} label="Pose Graph">
+            <LegendDot color="#F59E0B" label="Keyframe node" />
+            <LegendDot color="#94A3B8" label="Pose node" />
+            <LegendLine color="#E879F9" label="Loop closure" />
+            <LegendLine color="#475569" label="Odometry edge" />
+          </PanelSection>
 
-          {/* Stats */}
-          <div
-            style={{
-              marginTop: 10,
-              paddingTop: 10,
-              borderTop: "1px solid rgba(255,255,255,0.08)",
-              fontSize: 11,
-              color: "#94A3B8",
-              lineHeight: 2,
-            }}
-          >
-            <div>
-              Pose nodes:{" "}
-              <span style={{ color: "#F1F5F9", fontWeight: 600 }}>
-                {poseNodes.length}
-              </span>
-            </div>
-            <div>
-              Loop closures:{" "}
-              <span style={{ color: "#E879F9", fontWeight: 600 }}>
-                {loopClosureCount}
-              </span>
-            </div>
-            <div>
-              Position:{" "}
-              <span style={{ color: "#F1F5F9", fontFamily: "monospace" }}>
-                {pos[1].toFixed(4)}°N {pos[0].toFixed(4)}°E
-              </span>
-            </div>
-            <div>
-              Heading:{" "}
-              <span style={{ color: "#F1F5F9", fontFamily: "monospace" }}>
-                {Math.round(heading)}°T
-              </span>
-            </div>
-            <div>
-              Distance:{" "}
-              <span style={{ color: "#F1F5F9", fontFamily: "monospace" }}>
-                {(
-                  haversineDistance(ROUTE[0], pos, "km") * 1000
-                ).toFixed(0)}
-                m
-              </span>
-            </div>
+          <PanelSection icon={<Navigation size={10} />} label="Sensors">
+            <LegendArea fill="rgba(59,130,246,0.3)" border="#3B82F6" label="Camera (±35°)" />
+            <LegendArea fill="rgba(16,185,129,0.25)" border="#10B981" label="LiDAR 360°" />
+            <LegendArea fill="rgba(245,158,11,0.25)" border="#F59E0B" label="Rear radar" />
+            <LegendArea fill="rgba(99,102,241,0.25)" border="#818CF8" label="Uncertainty tube" />
+          </PanelSection>
+
+          {/* ── Stats ── */}
+          <div style={{
+            paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.07)",
+            fontSize: 11, color: "#64748B", lineHeight: 1.9,
+          }}>
+            <StatRow label="Pose nodes" value={poseNodes.length} color="#F1F5F9" />
+            <StatRow label="Loop closures" value={loopClosureCount} color="#E879F9" />
+            <StatRow label="Heading" value={`${Math.round(heading)}°T`} color="#F1F5F9" mono />
+            <StatRow label="Distance" value={`${(haversineDistance(ROUTE[0], pos, "km") * 1000).toFixed(0)}m`} color="#F1F5F9" mono />
           </div>
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* ── Legend ──────────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          background: "rgba(15,23,42,0.7)",
-          padding: "10px 20px",
-          display: "flex",
-          gap: 20,
-          flexWrap: "wrap",
-          fontSize: 11,
-          color: "#94A3B8",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-        }}
-      >
-        <span>
-          <span
-            style={{
-              display: "inline-block",
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              background: "#F59E0B",
-              marginRight: 4,
-            }}
-          />
-          Keyframe
-        </span>
-        <span>
-          <span
-            style={{
-              display: "inline-block",
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              background: "#94A3B8",
-              marginRight: 4,
-            }}
-          />
-          Pose node
-        </span>
-        <span>
-          <span
-            style={{
-              display: "inline-block",
-              width: 16,
-              height: 2,
-              background: "#E879F9",
-              marginRight: 4,
-              verticalAlign: "middle",
-            }}
-          />
-          Loop closure
-        </span>
-        <span>
-          <span
-            style={{
-              display: "inline-block",
-              width: 16,
-              height: 2,
-              background: "#64748B",
-              marginRight: 4,
-              verticalAlign: "middle",
-            }}
-          />
-          Odometry edge
-        </span>
-        <span>
-          <span
-            style={{
-              display: "inline-block",
-              width: 10,
-              height: 10,
-              background: "rgba(99,102,241,0.4)",
-              borderRadius: 2,
-              marginRight: 4,
-            }}
-          />
-          Uncertainty tube
-        </span>
-        <span>
-          <span
-            style={{
-              display: "inline-block",
-              width: 10,
-              height: 10,
-              background: "rgba(59,130,246,0.35)",
-              borderRadius: 2,
-              marginRight: 4,
-            }}
-          />
-          Camera FOV
-        </span>
-        <span>
-          <span
-            style={{
-              display: "inline-block",
-              width: 10,
-              height: 10,
-              background: "rgba(16,185,129,0.35)",
-              borderRadius: 2,
-              marginRight: 4,
-            }}
-          />
-          LiDAR
-        </span>
-        <span>
-          <span
-            style={{
-              display: "inline-block",
-              width: 10,
-              height: 10,
-              background: "rgba(245,158,11,0.35)",
-              borderRadius: 2,
-              marginRight: 4,
-            }}
-          />
-          Radar
-        </span>
+// ─── Panel sub-components ─────────────────────────────────────────────────────
+
+function PanelSection({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 5,
+        fontSize: 10, fontWeight: 700, color: "#475569",
+        textTransform: "uppercase", letterSpacing: "0.07em",
+        marginBottom: 5,
+      }}>
+        {icon}{label}
       </div>
+      {children}
+    </div>
+  );
+}
+
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3 }}>
+      <span style={{ width: 9, height: 9, borderRadius: "50%", background: color, flexShrink: 0, display: "inline-block" }} />
+      <span style={{ fontSize: 11, color: "#94A3B8" }}>{label}</span>
+    </div>
+  );
+}
+
+function LegendLine({ color, label }: { color: string; label: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3 }}>
+      <span style={{ width: 18, height: 2, background: color, flexShrink: 0, display: "inline-block", borderRadius: 1 }} />
+      <span style={{ fontSize: 11, color: "#94A3B8" }}>{label}</span>
+    </div>
+  );
+}
+
+function LegendArea({ fill, border, label }: { fill: string; border: string; label: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3 }}>
+      <span style={{
+        width: 18, height: 11, borderRadius: 3, flexShrink: 0, display: "inline-block",
+        background: fill, border: `1.5px solid ${border}`,
+      }} />
+      <span style={{ fontSize: 11, color: "#94A3B8" }}>{label}</span>
+    </div>
+  );
+}
+
+function StatRow({ label, value, color, mono }: { label: string; value: string | number; color: string; mono?: boolean }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+      <span>{label}</span>
+      <span style={{ color, fontWeight: 600, fontFamily: mono ? "monospace" : undefined }}>{value}</span>
     </div>
   );
 }

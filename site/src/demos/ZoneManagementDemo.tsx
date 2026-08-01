@@ -8,6 +8,7 @@ import {
 import type { Zone } from "mapbox-gl-kit";
 import { MarkerLayer } from "mapbox-gl-kit";
 import { ShipMarker } from "mapbox-gl-kit";
+import { AlertTriangle, Info, Play, Square, MapPin } from "lucide-react";
 
 // ─── Zone definitions ─────────────────────────────────────────────────────────
 
@@ -57,15 +58,15 @@ function pip(pt: [number, number], ring: [number, number][]): boolean {
   return inside;
 }
 
-// ─── Zone type labels ─────────────────────────────────────────────────────────
+// ─── Zone type config ─────────────────────────────────────────────────────────
 
-const ZONE_LABELS: Record<string, { label: string; color: string }> = {
-  forbidden:  { label: "진입 금지", color: "#EF4444" },
-  speed_limit:{ label: "속력 제한", color: "#F59E0B" },
-  danger:     { label: "위험 구역", color: "#A855F7" },
-  temporary:  { label: "임시 구역", color: "#EF4444" },
-  anchorage:  { label: "정박 구역", color: "#10B981" },
-  pilot:      { label: "도선 구역", color: "#3B82F6" },
+const ZONE_CONFIG: Record<string, { label: string; fill: string; border: string }> = {
+  forbidden:   { label: "진입 금지",  fill: "rgba(239,68,68,0.25)",   border: "#EF4444" },
+  speed_limit: { label: "속력 제한",  fill: "rgba(245,158,11,0.25)",  border: "#F59E0B" },
+  danger:      { label: "위험 구역",  fill: "rgba(168,85,247,0.25)",  border: "#A855F7" },
+  temporary:   { label: "임시 구역",  fill: "rgba(239,68,68,0.2)",    border: "#F87171" },
+  anchorage:   { label: "정박 구역",  fill: "rgba(16,185,129,0.25)",  border: "#10B981" },
+  pilot:       { label: "도선 구역",  fill: "rgba(59,130,246,0.25)",  border: "#3B82F6" },
 };
 
 // ─── Compute total path length ────────────────────────────────────────────────
@@ -78,17 +79,32 @@ function pathLength(path: [number, number][]): number {
   return d;
 }
 
+// ─── Toast type ───────────────────────────────────────────────────────────────
+
+interface Toast {
+  id: number;
+  message: string;
+  type: "warning" | "info";
+}
+
+let toastId = 0;
+
 // ─── Demo ─────────────────────────────────────────────────────────────────────
 
 export default function ZoneManagementDemo({ token }: { token: string }) {
   const [shipPos, setShipPos] = useState<[number, number]>(SHIP_PATH[0]);
   const [heading, setHeading] = useState(0);
   const [running, setRunning] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const tRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastZoneRef = useRef<string | null>(null);
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const pushToast = useCallback((message: string, type: Toast["type"]) => {
+    const id = ++toastId;
+    setToasts((prev) => [...prev.slice(-2), { id, message, type }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
+  }, []);
 
   const stopAnim = useCallback(() => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -111,42 +127,33 @@ export default function ZoneManagementDemo({ token }: { token: string }) {
       let cum = 0;
       for (let i = 1; i < SHIP_PATH.length; i++) {
         const seg = haversineDistance(SHIP_PATH[i - 1], SHIP_PATH[i], "km");
-        const t0 = cum / total, t1 = (cum + seg) / total;
+        const t1 = (cum + seg) / total;
         if (tRef.current <= t1) {
           const dx = SHIP_PATH[i][0] - SHIP_PATH[i - 1][0];
           const dy = SHIP_PATH[i][1] - SHIP_PATH[i - 1][1];
-          const brg = (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360;
-          setHeading(brg);
+          setHeading((Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360);
           break;
         }
         cum += seg;
-        void t0;
       }
 
       // Zone entry detection
-      const entered = ZONES.find((z) =>
-        pip(pos, [...z.coordinates, z.coordinates[0]])
-      );
+      const entered = ZONES.find((z) => pip(pos, [...z.coordinates, z.coordinates[0]]));
       if (entered && entered.id !== lastZoneRef.current) {
         lastZoneRef.current = entered.id;
-        setToast(`⚠ ${entered.name} 구역 진입`);
-        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-        toastTimerRef.current = setTimeout(() => setToast(null), 3000);
+        pushToast(`${entered.name} 구역 진입`, "warning");
       } else if (!entered) {
         lastZoneRef.current = null;
       }
     }, 50);
-  }, []);
+  }, [pushToast]);
 
   const toggleAnim = useCallback(() => {
     if (running) stopAnim();
     else startAnim();
   }, [running, startAnim, stopAnim]);
 
-  useEffect(() => () => {
-    stopAnim();
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-  }, [stopAnim]);
+  useEffect(() => () => { stopAnim(); }, [stopAnim]);
 
   return (
     <div style={{ position: "relative", height: 480, background: "#0F172A" }}>
@@ -159,11 +166,7 @@ export default function ZoneManagementDemo({ token }: { token: string }) {
         <ZoneLayer
           zones={ZONES}
           interactive
-          onZoneClick={(z: Zone) => {
-            setToast(`${z.name} 구역 선택됨`);
-            if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-            toastTimerRef.current = setTimeout(() => setToast(null), 3000);
-          }}
+          onZoneClick={(z: Zone) => pushToast(`${z.name}`, "info")}
         />
         <MarkerLayer
           markers={[{
@@ -175,60 +178,89 @@ export default function ZoneManagementDemo({ token }: { token: string }) {
         <ZoomControls style={{ position: "absolute", bottom: 40, right: 16 }} />
       </MapboxMap>
 
-      {/* Alert toast */}
-      {toast && (
-        <div style={{
-          position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)",
-          background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.5)",
-          color: "#FCA5A5", borderRadius: 8, padding: "8px 20px",
-          fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
-          backdropFilter: "blur(8px)",
-          boxShadow: "0 4px 20px rgba(0,0,0,.4)",
-          zIndex: 10,
-          animation: "fadeIn .2s ease",
-        }}>
-          {toast}
-        </div>
-      )}
-
-      {/* Legend */}
+      {/* Toast stack */}
       <div style={{
-        position: "absolute", top: 16, right: 16,
-        background: "rgba(15,23,42,0.9)", backdropFilter: "blur(10px)",
-        border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12,
-        padding: "12px 14px", minWidth: 160,
-        boxShadow: "0 4px 20px rgba(0,0,0,.5)",
+        position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)",
+        display: "flex", flexDirection: "column", gap: 6, alignItems: "center",
+        zIndex: 20, pointerEvents: "none",
       }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "#64748B", marginBottom: 10, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-          구역 범례
-        </div>
-        {Object.entries(ZONE_LABELS).map(([type, { label, color }]) => (
-          <div key={type} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 7 }}>
-            <span style={{
-              width: 10, height: 10, borderRadius: "50%",
-              background: color, flexShrink: 0,
-            }} />
-            <span style={{ fontSize: 12, color: "#CBD5E1" }}>{label}</span>
+        {toasts.map((t) => (
+          <div
+            key={t.id}
+            style={{
+              display: "flex", alignItems: "center", gap: 8,
+              background: t.type === "warning"
+                ? "rgba(239,68,68,0.15)" : "rgba(59,130,246,0.15)",
+              border: `1px solid ${t.type === "warning" ? "rgba(239,68,68,0.45)" : "rgba(59,130,246,0.45)"}`,
+              color: t.type === "warning" ? "#FCA5A5" : "#93C5FD",
+              borderRadius: 8, padding: "7px 16px",
+              fontSize: 12, fontWeight: 600, whiteSpace: "nowrap",
+              backdropFilter: "blur(10px)",
+              boxShadow: "0 4px 20px rgba(0,0,0,.45)",
+              animation: "slideDown .2s ease",
+            }}
+          >
+            {t.type === "warning"
+              ? <AlertTriangle size={13} style={{ flexShrink: 0 }} />
+              : <MapPin size={13} style={{ flexShrink: 0 }} />
+            }
+            {t.type === "warning" ? "경보 — " : ""}{t.message}
           </div>
         ))}
       </div>
 
-      {/* Animation button */}
+      {/* Legend */}
+      <div style={{
+        position: "absolute", top: 16, right: 16,
+        background: "rgba(15,23,42,0.88)", backdropFilter: "blur(12px)",
+        border: "1px solid rgba(255,255,255,0.09)", borderRadius: 12,
+        padding: "12px 14px", minWidth: 164,
+        boxShadow: "0 8px 32px rgba(0,0,0,.6)",
+      }}>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 6,
+          fontSize: 10, fontWeight: 700, color: "#475569",
+          marginBottom: 10, letterSpacing: "0.08em", textTransform: "uppercase",
+        }}>
+          <Info size={10} />
+          구역 범례
+        </div>
+        {Object.entries(ZONE_CONFIG).map(([type, { label, fill, border }]) => (
+          <div key={type} style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 6 }}>
+            <span style={{
+              width: 18, height: 12, borderRadius: 3, flexShrink: 0,
+              background: fill, border: `1.5px solid ${border}`,
+            }} />
+            <span style={{ fontSize: 11.5, color: "#CBD5E1", letterSpacing: "0.01em" }}>{label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Playback button */}
       <div style={{ position: "absolute", bottom: 16, left: 16 }}>
         <button
           onClick={toggleAnim}
           style={{
-            padding: "8px 18px", borderRadius: 8, cursor: "pointer",
-            background: running ? "rgba(16,185,129,0.2)" : "rgba(59,130,246,0.2)",
-            border: `1px solid ${running ? "rgba(16,185,129,0.5)" : "rgba(59,130,246,0.5)"}`,
+            display: "flex", alignItems: "center", gap: 7,
+            padding: "8px 16px", borderRadius: 8, cursor: "pointer",
+            background: running
+              ? "rgba(16,185,129,0.18)" : "rgba(59,130,246,0.18)",
+            border: `1px solid ${running ? "rgba(16,185,129,0.45)" : "rgba(59,130,246,0.45)"}`,
             color: running ? "#6EE7B7" : "#93C5FD",
-            fontSize: 13, fontWeight: 600,
+            fontSize: 12, fontWeight: 600,
             backdropFilter: "blur(8px)",
+            boxShadow: "0 2px 12px rgba(0,0,0,.35)",
+            transition: "all .15s",
           } as React.CSSProperties}
         >
-          {running ? "⏹ 애니메이션 정지" : "▶ 애니메이션 시작"}
+          {running
+            ? <><Square size={12} /> 정지</>
+            : <><Play size={12} /> 시뮬레이션 시작</>
+          }
         </button>
       </div>
+
+      <style>{`@keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}`}</style>
     </div>
   );
 }

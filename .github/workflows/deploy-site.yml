@@ -26,13 +26,27 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: site/pnpm-lock.yaml
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            site/pnpm-lock.yaml
 
-      - name: Install dependencies
+      - name: Install root dependencies
+        run: pnpm install
+
+      - name: Build library
+        run: pnpm build
+
+      - name: Install site dependencies
         run: pnpm install
         working-directory: site
 
-      - name: Build
+      - name: Sync local dist into site
+        run: |
+          mkdir -p site/node_modules/mapbox-gl-kit/dist
+          cp -r dist/. site/node_modules/mapbox-gl-kit/dist/
+          cp package.json site/node_modules/mapbox-gl-kit/package.json
+
+      - name: Build site
         run: pnpm vite build
         working-directory: site
         env:

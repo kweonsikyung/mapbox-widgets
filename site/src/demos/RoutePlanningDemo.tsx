@@ -177,40 +177,87 @@ export default function RoutePlanningDemo({ token }: { token: string }) {
       </div>
 
       {/* Waypoint table */}
-      <div style={{ flex: 1, overflow: "auto", padding: "12px 16px" }}>
+      <div style={{ flex: 1, overflow: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
           <thead>
-            <tr style={{ color: "#64748B", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              {["경유지", "방위", "거리", "항행 시간", "ETA"].map((h) => (
-                <th key={h} style={{ padding: "6px 10px", textAlign: "left", fontWeight: 600 }}>{h}</th>
+            <tr style={{ background: "rgba(255,255,255,0.025)" }}>
+              {[
+                { label: "경유지",     align: "left"  as const },
+                { label: "방위",       align: "right" as const },
+                { label: "거리",       align: "right" as const },
+                { label: "항행 시간",  align: "right" as const },
+                { label: "ETA",        align: "right" as const },
+              ].map(({ label, align }) => (
+                <th key={label} style={{
+                  padding: "7px 14px", textAlign: align,
+                  fontWeight: 600, fontSize: 11,
+                  color: "#475569", letterSpacing: "0.04em",
+                  borderBottom: "1px solid rgba(255,255,255,0.07)",
+                }}>
+                  {label}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, i) => (
-              <tr
-                key={i}
-                style={{
-                  borderBottom: "1px solid rgba(255,255,255,0.04)",
-                  color: i === 0 ? "#10B981" : i === rows.length - 1 ? "#EF4444" : "#CBD5E1",
-                }}
-              >
-                <td style={{ padding: "7px 10px", fontWeight: 600 }}>{row.label}</td>
-                <td style={{ padding: "7px 10px", color: "#94A3B8" }}>{row.bearing}</td>
-                <td style={{ padding: "7px 10px" }}>{row.distance}</td>
-                <td style={{ padding: "7px 10px" }}>{row.travelTime}</td>
-                <td style={{ padding: "7px 10px", fontFamily: "monospace" }}>{row.eta}</td>
-              </tr>
-            ))}
+            {rows.map((row, i) => {
+              const isFirst = i === 0;
+              const isLast  = i === rows.length - 1;
+              const accent  = isFirst ? "#10B981" : isLast ? "#EF4444" : undefined;
+              return (
+                <tr
+                  key={i}
+                  style={{
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                    background: isFirst
+                      ? "rgba(16,185,129,0.05)"
+                      : isLast
+                      ? "rgba(239,68,68,0.05)"
+                      : undefined,
+                  }}
+                >
+                  <td style={{ padding: "9px 14px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{
+                        width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+                        background: accent ?? "#3B82F6",
+                      }} />
+                      <span style={{ fontWeight: 600, color: accent ?? "#CBD5E1" }}>{row.label}</span>
+                    </div>
+                  </td>
+                  <td style={{ padding: "9px 14px", textAlign: "right", color: "#94A3B8", fontFamily: "monospace" }}>{row.bearing}</td>
+                  <td style={{ padding: "9px 14px", textAlign: "right", color: "#CBD5E1" }}>{row.distance}</td>
+                  <td style={{ padding: "9px 14px", textAlign: "right", color: "#CBD5E1" }}>{row.travelTime}</td>
+                  <td style={{ padding: "9px 14px", textAlign: "right", fontFamily: "monospace", color: accent ?? "#93C5FD", fontWeight: 600 }}>{row.eta}</td>
+                </tr>
+              );
+            })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={5} style={{ padding: "16px 10px", color: "#475569", textAlign: "center" }}>
+                <td colSpan={5} style={{ padding: "24px 14px", color: "#334155", textAlign: "center", fontSize: 12 }}>
                   지도를 클릭하여 경유지를 추가하세요
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+
+        {/* Total summary row */}
+        {rows.length >= 2 && (() => {
+          const lastRow = rows[rows.length - 1];
+          return (
+            <div style={{
+              display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 16,
+              padding: "8px 14px",
+              borderTop: "1px solid rgba(255,255,255,0.07)",
+              background: "rgba(255,255,255,0.02)",
+              fontSize: 11, color: "#64748B",
+            }}>
+              <span>총 {rows.length - 1}개 구간</span>
+              <span style={{ color: "#93C5FD", fontFamily: "monospace", fontWeight: 600 }}>도착 {lastRow.eta}</span>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
