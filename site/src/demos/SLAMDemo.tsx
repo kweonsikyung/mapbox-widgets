@@ -11,6 +11,7 @@ import {
   UncertaintyTube,
   interpolatePosition,
   haversineDistance,
+  useFlyTo,
 } from "mapbox-gl-kit";
 import type {
   Route,
@@ -18,7 +19,7 @@ import type {
   PoseEdge,
   SensorConfig,
 } from "mapbox-gl-kit";
-import { Play, Pause, Activity, Eye, Navigation } from "lucide-react";
+import { Play, Pause, Activity, Eye, Navigation, LocateFixed } from "lucide-react";
 import { GlassPanel, PanelSection, LegendItem, StatRow, SmallButton } from "../DemoUI";
 
 // ─── Route (Seoul urban loop) ─────────────────────────────────────────────────
@@ -86,6 +87,33 @@ function makeRouteFC(coords: [number, number][]): FeatureCollection {
       ? [{ type: "Feature", geometry: { type: "LineString", coordinates: coords }, properties: {} }]
       : [],
   };
+}
+
+// ─── Reset view button (must live inside MapboxMap context) ──────────────────
+
+function ResetViewButton({ currentPos }: { currentPos: [number, number] }) {
+  const flyTo = useFlyTo();
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      title="Follow vehicle"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => flyTo(currentPos, { zoom: 15, duration: 800 })}
+      style={{
+        position: "absolute", bottom: 16, right: 16,
+        width: 36, height: 36, borderRadius: 8,
+        background: hovered ? "rgba(59,130,246,0.85)" : "rgba(15,23,42,0.85)",
+        border: "1px solid rgba(255,255,255,0.15)",
+        color: hovered ? "#fff" : "#94A3B8",
+        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+        backdropFilter: "blur(8px)",
+        transition: "background .15s, color .15s",
+      }}
+    >
+      <LocateFixed size={16} />
+    </button>
+  );
 }
 
 // ─── SLAMDemo ────────────────────────────────────────────────────────────────
@@ -192,6 +220,7 @@ export default function SLAMDemo({ token }: { token: string }) {
         {showFov  && <SensorFOV position={pos} heading={heading} sensors={SENSORS} />}
         <MarkerLayer markers={[{ id: "vehicle", lngLat: pos, element: vehicleElement }]} />
         <ZoomControls style={{ position: "absolute", top: 16, right: 16 }} />
+        <ResetViewButton currentPos={pos} />
       </MapboxMap>
 
       {/* Controls panel */}
