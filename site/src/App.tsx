@@ -273,19 +273,24 @@ const FEATURES = [
   },
 ];
 
-const DEMOS = [
-  { id: "route", label: "Route & Vessel", Component: RouteDemo },
-  { id: "draw", label: "Drawing Tools", Component: DrawDemo },
-  { id: "editor", label: "Route Builder", Component: RouteEditorDemo },
-  { id: "cluster", label: "Data Layers", Component: ClusterDemo },
-  { id: "timeline", label: "Timeline", Component: TimelineDemo },
-  { id: "route-plan",  label: "항로 계획",     Component: RoutePlanningDemo  },
-  { id: "zones",       label: "구역 관제",     Component: ZoneManagementDemo },
-  { id: "sar",         label: "수색구조",      Component: SARDemo            },
-  { id: "port",        label: "항만 운용",     Component: PortOperationsDemo },
-  { id: "training",    label: "훈련 시나리오", Component: TrainingDemo       },
-  { id: "slam",        label: "SLAM / 자율주행", Component: SLAMDemo         },
+const DEMOS_LIB = [
+  { id: "route",    label: "Route & Vessel", Component: RouteDemo        },
+  { id: "draw",     label: "Drawing Tools",  Component: DrawDemo         },
+  { id: "editor",   label: "Route Builder",  Component: RouteEditorDemo  },
+  { id: "cluster",  label: "Data Layers",    Component: ClusterDemo      },
+  { id: "timeline", label: "Timeline",       Component: TimelineDemo     },
 ];
+
+const DEMOS_PLATFORM = [
+  { id: "route-plan", label: "항로 계획",       Component: RoutePlanningDemo  },
+  { id: "zones",      label: "구역 관제",       Component: ZoneManagementDemo },
+  { id: "sar",        label: "수색구조",        Component: SARDemo            },
+  { id: "port",       label: "항만 운용",       Component: PortOperationsDemo },
+  { id: "training",   label: "훈련 시나리오",   Component: TrainingDemo       },
+  { id: "slam",       label: "SLAM / 자율주행", Component: SLAMDemo           },
+];
+
+const DEMOS = [...DEMOS_LIB, ...DEMOS_PLATFORM];
 
 const CODE: Record<string, string> = {
   install: `# Install the package and its peer dependency
@@ -804,10 +809,8 @@ function DemoSection({ token }: { token: string }) {
     if (id !== "components") setMounted((prev) => new Set([...prev, id]));
   };
 
-  const tabs = [
-    { id: "components", label: "Components" },
-    ...DEMOS.map(({ id, label }) => ({ id, label })),
-  ];
+  const isPlatform = DEMOS_PLATFORM.some((d) => d.id === activeTab);
+  const accentColor = isPlatform ? "#10B981" : C.accent;
 
   return (
     <section
@@ -844,47 +847,93 @@ function DemoSection({ token }: { token: string }) {
           overflow: "hidden",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            gap: 0,
-            borderBottom: `1px solid ${C.border}`,
-            background: "rgba(255,255,255,0.02)",
-          }}
-        >
-          {tabs.map(({ id, label }) => {
-            const active = activeTab === id;
-            return (
-              <button
-                key={id}
-                onClick={() => activate(id)}
-                style={{
-                  padding: "11px 20px",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 13.5,
-                  fontWeight: active ? 600 : 400,
-                  background: "none",
-                  color: active ? C.text : C.muted,
-                  borderBottom: active
-                    ? `2px solid ${C.accent}`
-                    : "2px solid transparent",
-                  marginBottom: -1,
-                  transition: "all 0.12s",
-                  ...(id === "components"
-                    ? {
-                        borderRight: `1px solid ${C.border}`,
-                        color: active ? C.text : C.muted,
-                      }
-                    : {}),
-                }}
-              >
-                {label}
-              </button>
-            );
-          })}
+        {/* ── Tab bar ── */}
+        <div style={{ borderBottom: `1px solid ${C.border}`, background: "rgba(255,255,255,0.02)" }}>
+
+          {/* Row 1: Components + Library demos */}
+          <div style={{ display: "flex", alignItems: "stretch" }}>
+            {/* Group label */}
+            <div style={{
+              padding: "6px 14px",
+              fontSize: 10, fontWeight: 700, color: "#334155",
+              textTransform: "uppercase", letterSpacing: "0.08em",
+              display: "flex", alignItems: "center",
+              borderRight: `1px solid ${C.border}`,
+              flexShrink: 0,
+              userSelect: "none",
+            }}>
+              Library
+            </div>
+
+            {/* Components tab */}
+            {[{ id: "components", label: "Components" }, ...DEMOS_LIB].map(({ id, label }) => {
+              const active = activeTab === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => activate(id)}
+                  style={{
+                    padding: "9px 18px",
+                    border: "none", cursor: "pointer",
+                    fontSize: 13, fontWeight: active ? 600 : 400,
+                    background: "none",
+                    color: active ? C.text : C.muted,
+                    borderBottom: active ? `2px solid ${C.accent}` : "2px solid transparent",
+                    marginBottom: -1,
+                    transition: "all 0.12s",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: 1, background: C.border }} />
+
+          {/* Row 2: Maritime Platform demos */}
+          <div style={{ display: "flex", alignItems: "stretch" }}>
+            {/* Group label */}
+            <div style={{
+              padding: "6px 14px",
+              fontSize: 10, fontWeight: 700, color: "#1D4437",
+              textTransform: "uppercase", letterSpacing: "0.08em",
+              display: "flex", alignItems: "center",
+              borderRight: `1px solid ${C.border}`,
+              flexShrink: 0,
+              userSelect: "none",
+            }}>
+              Platform
+            </div>
+
+            {DEMOS_PLATFORM.map(({ id, label }) => {
+              const active = activeTab === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => activate(id)}
+                  style={{
+                    padding: "9px 18px",
+                    border: "none", cursor: "pointer",
+                    fontSize: 13, fontWeight: active ? 600 : 400,
+                    background: "none",
+                    color: active ? C.text : C.muted,
+                    borderBottom: active ? `2px solid ${accentColor}` : "2px solid transparent",
+                    marginBottom: -1,
+                    transition: "all 0.12s",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
+        {/* ── Content ── */}
         {activeTab === "components" ? (
           <ComponentsTab />
         ) : (
