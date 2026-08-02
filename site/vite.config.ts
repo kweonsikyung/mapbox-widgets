@@ -7,9 +7,10 @@ export default defineConfig({
   base: "./",
   resolve: {
     alias: {
-      // Local dev: resolve mapbox-gl-kit to the library's TypeScript source directly.
-      // CI uses the built dist (synced via workflow), so this alias is dev-only.
       "mapbox-gl-kit": path.resolve(__dirname, "../src/index.ts"),
     },
+    // Force all imports of these packages — including ones from ../src — to
+    // resolve through site/node_modules so there is only one copy at runtime.
+    dedupe: ["mapbox-gl", "react", "react-dom"],
   },
 });
