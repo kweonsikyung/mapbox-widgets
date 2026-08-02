@@ -282,15 +282,14 @@ const DEMOS_LIB = [
 ];
 
 const DEMOS_PLATFORM = [
-  { id: "route-plan", label: "항로 계획",       Component: RoutePlanningDemo  },
-  { id: "zones",      label: "구역 관제",       Component: ZoneManagementDemo },
-  { id: "sar",        label: "수색구조",        Component: SARDemo            },
-  { id: "port",       label: "항만 운용",       Component: PortOperationsDemo },
-  { id: "training",   label: "훈련 시나리오",   Component: TrainingDemo       },
-  { id: "slam",       label: "SLAM / 자율주행", Component: SLAMDemo           },
+  { id: "route-plan", label: "Route Planning", Component: RoutePlanningDemo  },
+  { id: "zones",      label: "Zone Control",   Component: ZoneManagementDemo },
+  { id: "sar",        label: "SAR",            Component: SARDemo            },
+  { id: "port",       label: "Port Ops",       Component: PortOperationsDemo },
+  { id: "training",   label: "Training",       Component: TrainingDemo       },
+  { id: "slam",       label: "SLAM",           Component: SLAMDemo           },
 ];
 
-const DEMOS = [...DEMOS_LIB, ...DEMOS_PLATFORM];
 
 const CODE: Record<string, string> = {
   install: `# Install the package and its peer dependency
@@ -437,14 +436,14 @@ function FeatureCard({ Icon, title, desc, tags }: (typeof FEATURES)[0]) {
 
 // ─── Sections ───────────────────────────────────────────────────────────────
 
-function Nav() {
+type Page = "library" | "platform";
+
+function Nav({ page, setPage }: { page: Page; setPage: (p: Page) => void }) {
   return (
     <nav
       style={{
         position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
+        top: 0, left: 0, right: 0,
         zIndex: 100,
         height: 56,
         display: "flex",
@@ -456,23 +455,16 @@ function Nav() {
         borderBottom: `1px solid ${C.border}`,
       }}
     >
+      {/* Logo */}
       <span
-        style={{
-          fontSize: 16,
-          fontWeight: 700,
-          color: C.text,
-          letterSpacing: "-0.02em",
-          flex: 1,
-        }}
+        style={{ fontSize: 16, fontWeight: 700, color: C.text, letterSpacing: "-0.02em" }}
       >
         mapbox-gl-kit
       </span>
       <span
         style={{
-          fontSize: 11,
-          fontWeight: 600,
-          padding: "2px 9px",
-          borderRadius: 999,
+          fontSize: 11, fontWeight: 600,
+          padding: "2px 9px", borderRadius: 999,
           background: "rgba(59,130,246,0.12)",
           color: C.accent,
           border: "1px solid rgba(59,130,246,0.28)",
@@ -480,10 +472,42 @@ function Nav() {
       >
         v0.1.0
       </span>
+
+      {/* Page switcher */}
+      <div style={{
+        display: "flex", gap: 2,
+        background: "rgba(255,255,255,0.04)",
+        border: `1px solid ${C.border}`,
+        borderRadius: 9, padding: 3,
+        marginLeft: 16,
+      }}>
+        {([
+          { id: "library",  label: "Library",  accent: C.accent  },
+          { id: "platform", label: "Platform", accent: "#10B981" },
+        ] as { id: Page; label: string; accent: string }[]).map(({ id, label, accent }) => {
+          const active = page === id;
+          return (
+            <button
+              key={id}
+              onClick={() => setPage(id)}
+              style={{
+                padding: "5px 14px", borderRadius: 6, border: "none",
+                cursor: "pointer", fontSize: 12, fontWeight: active ? 600 : 400,
+                background: active ? accent + "22" : "transparent",
+                color: active ? accent : C.muted,
+                outline: active ? `1px solid ${accent}44` : "none",
+                transition: "all .15s",
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div style={{ flex: 1 }} />
       <NavLink href="https://www.npmjs.com/package/mapbox-gl-kit">npm</NavLink>
-      <NavLink href="https://github.com/kweonsikyung/mapbox-widgets">
-        GitHub
-      </NavLink>
+      <NavLink href="https://github.com/kweonsikyung/mapbox-widgets">GitHub</NavLink>
     </nav>
   );
 }
@@ -800,155 +824,152 @@ function ComponentsTab() {
   );
 }
 
-function DemoSection({ token }: { token: string }) {
-  const [activeTab, setActiveTab] = useState<string>("components");
-  const [mounted, setMounted] = useState(new Set<string>());
+type DemoItem = { id: string; label: string; Component: React.FC<{ token: string }> };
+
+function DemoTabs({
+  token,
+  demos,
+  showComponents = false,
+  accent = C.accent,
+}: {
+  token: string;
+  demos: DemoItem[];
+  showComponents?: boolean;
+  accent?: string;
+}) {
+  const firstId = showComponents ? "components" : demos[0]?.id ?? "";
+  const [activeTab, setActiveTab] = useState<string>(firstId);
+  const [mounted,   setMounted]   = useState(new Set<string>([firstId]));
 
   const activate = (id: string) => {
     setActiveTab(id);
-    if (id !== "components") setMounted((prev) => new Set([...prev, id]));
+    setMounted((prev) => new Set([...prev, id]));
   };
 
-  const isPlatform = DEMOS_PLATFORM.some((d) => d.id === activeTab);
-  const accentColor = isPlatform ? "#10B981" : C.accent;
+  const tabs = showComponents
+    ? [{ id: "components", label: "Components" }, ...demos]
+    : demos;
 
   return (
-    <section
-      id="demos"
-      style={{ padding: "80px 24px", maxWidth: 1100, margin: "0 auto" }}
-    >
-      <h2
-        style={{
-          fontSize: "clamp(28px, 4vw, 42px)",
-          fontWeight: 700,
-          letterSpacing: "-0.03em",
-          color: C.text,
-          textAlign: "center",
-          marginBottom: 12,
-        }}
-      >
-        Explore
-      </h2>
-      <p
-        style={{
-          textAlign: "center",
-          color: C.muted,
-          marginBottom: 48,
-          fontSize: 16,
-        }}
-      >
-        Browse all components, or jump into an interactive demo.
-      </p>
+    <div style={{ border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+      {/* Tab bar */}
+      <div style={{
+        display: "flex", overflowX: "auto",
+        borderBottom: `1px solid ${C.border}`,
+        background: "rgba(255,255,255,0.02)",
+        scrollbarWidth: "none",
+      }}>
+        {tabs.map(({ id, label }) => {
+          const active = activeTab === id;
+          return (
+            <button
+              key={id}
+              onClick={() => activate(id)}
+              style={{
+                padding: "11px 20px",
+                border: "none", cursor: "pointer",
+                fontSize: 13.5, fontWeight: active ? 600 : 400,
+                background: "none",
+                color: active ? C.text : C.muted,
+                borderBottom: active ? `2px solid ${accent}` : "2px solid transparent",
+                marginBottom: -1,
+                transition: "color .12s",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
 
-      <div
-        style={{
-          border: `1px solid ${C.border}`,
-          borderRadius: 14,
-          overflow: "hidden",
-        }}
-      >
-        {/* ── Tab bar ── */}
-        <div style={{ borderBottom: `1px solid ${C.border}`, background: "rgba(255,255,255,0.02)" }}>
-
-          {/* Row 1: Components + Library demos */}
-          <div style={{ display: "flex", alignItems: "stretch" }}>
-            {/* Group label */}
-            <div style={{
-              padding: "6px 14px",
-              fontSize: 10, fontWeight: 700, color: "#334155",
-              textTransform: "uppercase", letterSpacing: "0.08em",
-              display: "flex", alignItems: "center",
-              borderRight: `1px solid ${C.border}`,
-              flexShrink: 0,
-              userSelect: "none",
-            }}>
-              Library
+      {/* Content */}
+      {showComponents && activeTab === "components" ? (
+        <ComponentsTab />
+      ) : (
+        demos.map(({ id, Component }) =>
+          mounted.has(id) ? (
+            <div key={id} style={{ display: activeTab === id ? "block" : "none" }}>
+              <Component token={token} />
             </div>
+          ) : null,
+        )
+      )}
+    </div>
+  );
+}
 
-            {/* Components tab */}
-            {[{ id: "components", label: "Components" }, ...DEMOS_LIB].map(({ id, label }) => {
-              const active = activeTab === id;
-              return (
-                <button
-                  key={id}
-                  onClick={() => activate(id)}
-                  style={{
-                    padding: "9px 18px",
-                    border: "none", cursor: "pointer",
-                    fontSize: 13, fontWeight: active ? 600 : 400,
-                    background: "none",
-                    color: active ? C.text : C.muted,
-                    borderBottom: active ? `2px solid ${C.accent}` : "2px solid transparent",
-                    marginBottom: -1,
-                    transition: "all 0.12s",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Divider */}
-          <div style={{ height: 1, background: C.border }} />
-
-          {/* Row 2: Maritime Platform demos */}
-          <div style={{ display: "flex", alignItems: "stretch" }}>
-            {/* Group label */}
-            <div style={{
-              padding: "6px 14px",
-              fontSize: 10, fontWeight: 700, color: "#1D4437",
-              textTransform: "uppercase", letterSpacing: "0.08em",
-              display: "flex", alignItems: "center",
-              borderRight: `1px solid ${C.border}`,
-              flexShrink: 0,
-              userSelect: "none",
-            }}>
-              Platform
-            </div>
-
-            {DEMOS_PLATFORM.map(({ id, label }) => {
-              const active = activeTab === id;
-              return (
-                <button
-                  key={id}
-                  onClick={() => activate(id)}
-                  style={{
-                    padding: "9px 18px",
-                    border: "none", cursor: "pointer",
-                    fontSize: 13, fontWeight: active ? 600 : 400,
-                    background: "none",
-                    color: active ? C.text : C.muted,
-                    borderBottom: active ? `2px solid ${accentColor}` : "2px solid transparent",
-                    marginBottom: -1,
-                    transition: "all 0.12s",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {label}
-                </button>
-              );
-            })}
+function PlatformPage({ token }: { token: string }) {
+  const teal = "#10B981";
+  return (
+    <>
+      {/* Hero */}
+      <section style={{
+        padding: "80px 24px 60px",
+        textAlign: "center",
+        background: `radial-gradient(ellipse 70% 55% at 50% 0%, rgba(16,185,129,0.13) 0%, transparent 68%), ${C.bg}`,
+      }}>
+        <div style={{ maxWidth: 680, margin: "0 auto" }}>
+          <span style={{
+            display: "inline-block",
+            fontSize: 11, fontWeight: 700,
+            letterSpacing: "0.1em", textTransform: "uppercase",
+            color: teal, background: "rgba(16,185,129,0.1)",
+            border: "1px solid rgba(16,185,129,0.25)",
+            padding: "4px 12px", borderRadius: 999, marginBottom: 24,
+          }}>
+            Maritime Platform
+          </span>
+          <h1 style={{
+            fontSize: "clamp(40px, 6vw, 68px)",
+            fontWeight: 800, letterSpacing: "-0.04em", lineHeight: 1.05,
+            color: C.text, marginBottom: 20,
+          }}>
+            Vessel Operations<br />
+            <span style={{ color: teal }}>at scale</span>
+          </h1>
+          <p style={{ fontSize: 17, color: C.muted, lineHeight: 1.7, maxWidth: 500, margin: "0 auto 20px" }}>
+            Full-stack maritime demos — route planning, zone control, SAR coordination,
+            port operations, SLAM visualization, and crew training.
+          </p>
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginTop: 12 }}>
+            {[
+              { label: "AIS Integration", color: teal },
+              { label: "Zone Alerts",     color: teal },
+              { label: "SAR Grid",        color: teal },
+              { label: "SLAM Viz",        color: teal },
+            ].map(({ label, color }) => (
+              <span key={label} style={{
+                fontSize: 12, fontWeight: 500,
+                padding: "4px 12px", borderRadius: 999,
+                background: "rgba(16,185,129,0.08)",
+                border: "1px solid rgba(16,185,129,0.2)",
+                color,
+              }}>{label}</span>
+            ))}
           </div>
         </div>
+      </section>
 
-        {/* ── Content ── */}
-        {activeTab === "components" ? (
-          <ComponentsTab />
-        ) : (
-          DEMOS.map(({ id, Component }) =>
-            mounted.has(id) ? (
-              <div
-                key={id}
-                style={{ display: activeTab === id ? "block" : "none" }}
-              >
-                <Component token={token} />
-              </div>
-            ) : null,
-          )
-        )}
-      </div>
+      {/* Demo tabs */}
+      <section style={{ padding: "0 24px 80px", maxWidth: 1100, margin: "0 auto" }}>
+        <DemoTabs token={token} demos={DEMOS_PLATFORM} accent={teal} />
+      </section>
+    </>
+  );
+}
+
+function LibraryDemoSection({ token }: { token: string }) {
+  return (
+    <section id="demos" style={{ padding: "80px 24px", maxWidth: 1100, margin: "0 auto" }}>
+      <h2 style={{ fontSize: "clamp(28px,4vw,42px)", fontWeight: 700, letterSpacing: "-0.03em", color: C.text, textAlign: "center", marginBottom: 12 }}>
+        Explore
+      </h2>
+      <p style={{ textAlign: "center", color: C.muted, marginBottom: 48, fontSize: 16 }}>
+        Browse all components, or try an interactive demo.
+      </p>
+      <DemoTabs token={token} demos={DEMOS_LIB} showComponents accent={C.accent} />
     </section>
   );
 }
@@ -1081,15 +1102,33 @@ function Footer() {
 // ─── App ────────────────────────────────────────────────────────────────────
 
 export default function App() {
+  const [page, setPage] = useState<Page>("library");
+  const [everVisited, setEverVisited] = useState(new Set<Page>(["library"]));
+
+  const switchPage = (p: Page) => {
+    setPage(p);
+    setEverVisited((prev) => new Set([...prev, p]));
+  };
+
   return (
     <div style={{ background: C.bg, color: C.text, minHeight: "100vh" }}>
-      <Nav />
+      <Nav page={page} setPage={switchPage} />
       <main style={{ paddingTop: 56 }}>
-        <Hero />
-        <Stats />
-        <Features />
-        <DemoSection token={TOKEN} />
-        <QuickStart />
+        {/* Library — always mounted; hidden when not active */}
+        <div style={{ display: page === "library" ? "block" : "none" }}>
+          <Hero />
+          <Stats />
+          <Features />
+          <LibraryDemoSection token={TOKEN} />
+          <QuickStart />
+        </div>
+
+        {/* Platform — lazy-mounted on first visit, then kept alive */}
+        {everVisited.has("platform") && (
+          <div style={{ display: page === "platform" ? "block" : "none" }}>
+            <PlatformPage token={TOKEN} />
+          </div>
+        )}
       </main>
       <Footer />
     </div>

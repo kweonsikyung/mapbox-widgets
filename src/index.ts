@@ -93,6 +93,22 @@ export {
   niceScale,
   interpolatePosition,
 } from "./utils/geo";
+export {
+  downloadGeoJSON,
+  copyGeoJSONToClipboard,
+  exportLayerAsGeoJSON,
+  downloadLayerAsGeoJSON,
+  addWMSLayer,
+  addWMTSLayer,
+  removeMapLayer,
+  prefetchTiles,
+  setTileCacheSize,
+} from "./utils/mapData";
+export type {
+  WMSLayerOptions,
+  WMTSLayerOptions,
+  TilePrefetchOptions,
+} from "./utils/mapData";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 export type {

@@ -45,7 +45,12 @@ function MapboxInner({
       onMapLoad?.(map);
     });
 
+    // Resize the map whenever the container is shown after being hidden (display:none).
+    const ro = new ResizeObserver(() => map.resize());
+    ro.observe(containerRef.current!);
+
     return () => {
+      ro.disconnect();
       map.remove();
       mapRef.current = null;
     };
