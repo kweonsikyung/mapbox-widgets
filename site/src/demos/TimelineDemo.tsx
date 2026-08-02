@@ -41,7 +41,7 @@ export default function TimelineDemo({ token }: { token: string }) {
 
   return (
     <div>
-      <div style={{ position: "relative", height: 380 }}>
+      <div style={{ position: "relative", height: 480 }}>
         <MapboxMap accessToken={token} initialCenter={[128, 33]} initialZoom={5}
           style={{ width: "100%", height: "100%" }}>
           <RouteLayer routes={routes} />

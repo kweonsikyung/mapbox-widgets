@@ -35,7 +35,7 @@ export default function DrawDemo({ token }: { token: string }) {
   const activeMode = selecting || measuring ? "none" : mode;
 
   return (
-    <div style={{ position: "relative", height: 480 }}>
+    <div style={{ position: "relative", height: 560 }}>
       <MapboxMap accessToken={token} initialCenter={[126.978, 37.566]} initialZoom={7}
         style={{ width: "100%", height: "100%" }}>
         <DrawLayer

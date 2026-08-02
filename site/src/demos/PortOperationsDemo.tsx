@@ -56,7 +56,7 @@ export default function PortOperationsDemo({ token }: { token: string }) {
   const passedZones = PORT_ZONES.filter((z) => zoneIds.includes(z.id));
 
   return (
-    <div style={{ display: "flex", height: 480, background: "#0F172A", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: 640, background: "#0F172A", overflow: "hidden" }}>
 
       {/* Left panel */}
       <div style={{

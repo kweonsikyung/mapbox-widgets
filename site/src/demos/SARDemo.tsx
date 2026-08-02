@@ -183,7 +183,7 @@ export default function SARDemo({ token }: { token: string }) {
   });
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: 620, background: "#0F172A" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: 640, background: "#0F172A" }}>
 
       {/* ── Top bar ── */}
       <Toolbar title="수색구조 (SAR)">

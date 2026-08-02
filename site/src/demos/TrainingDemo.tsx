@@ -52,7 +52,7 @@ export default function TrainingDemo({ token }: { token: string }) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: 580, background: "#0F172A" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: 640, background: "#0F172A" }}>
 
       <DemoBar title="훈련 시나리오">
         {/* Stats */}

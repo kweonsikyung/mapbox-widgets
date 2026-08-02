@@ -178,7 +178,7 @@ export default function SLAMDemo({ token }: { token: string }) {
   ];
 
   return (
-    <div style={{ position: "relative", height: 480 }}>
+    <div style={{ position: "relative", height: 560 }}>
       <MapboxMap
         accessToken={token}
         initialCenter={[127.006, 37.5]}

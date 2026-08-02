@@ -21,7 +21,7 @@ export default function RouteEditorDemo({ token }: { token: string }) {
   const [wpCount, setWpCount] = useState(PRESET.length);
 
   return (
-    <div style={{ position: "relative", height: 480 }}>
+    <div style={{ position: "relative", height: 560 }}>
       <MapboxMap
         accessToken={token}
         initialCenter={[125.5, 33.5]}

@@ -29,7 +29,7 @@ export default function ClusterDemo({ token }: { token: string }) {
     setLayers(prev => prev.map(l => l.id === id ? { ...l, visible: vis } : l));
 
   return (
-    <div style={{ position: "relative", height: 480 }}>
+    <div style={{ position: "relative", height: 560 }}>
       <MapboxMap accessToken={token} initialCenter={[127, 30]} initialZoom={4}
         style={{ width: "100%", height: "100%" }}>
         <ClusterLayer data={DATA} clusterColor="#3B82F6" pointColor="#10B981" pointRadius={7}

@@ -154,7 +154,7 @@ export default function ZoneManagementDemo({ token }: { token: string }) {
   const elapsedStr   = `${Math.floor(elapsed / 60000).toString().padStart(2, "0")}:${Math.floor((elapsed % 60000) / 1000).toString().padStart(2, "0")}`;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: 580, background: "#0F172A" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: 640, background: "#0F172A" }}>
 
       {/* Top bar */}
       <Toolbar title="구역 관제">
