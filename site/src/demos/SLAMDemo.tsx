@@ -30,25 +30,29 @@ const ROUTE: [number, number][] = [
   [126.994, 37.497], [127.0, 37.505],
 ];
 
-// ─── Occupancy grid ───────────────────────────────────────────────────────────
+// ─── Occupancy grid — centered on the route ───────────────────────────────────
 
-const LNG_MIN = Math.min(...ROUTE.map((p) => p[0]));
-const LAT_MIN = Math.min(...ROUTE.map((p) => p[1]));
-const RESOLUTION = 2;
-const GRID_CELLS = 200;
+const ROUTE_CENTER: [number, number] = [
+  ROUTE.reduce((s, p) => s + p[0], 0) / ROUTE.length,
+  ROUTE.reduce((s, p) => s + p[1], 0) / ROUTE.length,
+];
+const RESOLUTION  = 5;   // meters per cell
+const GRID_CELLS  = 240; // 240 × 5m = 1200m coverage
 
 function makeGrid(): number[][] {
   const grid: number[][] = [];
   for (let r = 0; r < GRID_CELLS; r++) {
     const row: number[] = [];
     for (let c = 0; c < GRID_CELLS; c++) {
-      const isRoadH = r % 20 === 0 || r % 20 === 1 || r % 20 === 19;
-      const isRoadV = c % 20 === 0 || c % 20 === 1 || c % 20 === 19;
+      const blockR = r % 24, blockC = c % 24;
+      const isRoadH = blockR < 3 || blockR > 21;
+      const isRoadV = blockC < 3 || blockC > 21;
       if (isRoadH || isRoadV) { row.push(0); continue; }
-      const br = r % 20, bc = c % 20;
-      if (br >= 4 && br <= 16 && bc >= 4 && bc <= 16) {
-        row.push(br <= 10 && bc <= 10 ? 100 : br >= 12 || bc >= 12 ? 80 : -1);
-      } else { row.push(-1); }
+      if (blockR >= 5 && blockR <= 19 && blockC >= 5 && blockC <= 19) {
+        row.push(blockR < 12 && blockC < 12 ? 100 : 75);
+      } else {
+        row.push(-1);
+      }
     }
     grid.push(row);
   }
@@ -56,14 +60,20 @@ function makeGrid(): number[][] {
 }
 
 const OCCUPANCY_GRID = makeGrid();
-const GRID_ORIGIN: [number, number] = [LNG_MIN - 0.002, LAT_MIN - 0.002];
+// Place grid SW corner so the grid is centered on the route
+const GRID_SPAN_LAT = (RESOLUTION * GRID_CELLS) / 111320;
+const GRID_SPAN_LNG = (RESOLUTION * GRID_CELLS) / (111320 * Math.cos((ROUTE_CENTER[1] * Math.PI) / 180));
+const GRID_ORIGIN: [number, number] = [
+  ROUTE_CENTER[0] - GRID_SPAN_LNG / 2,
+  ROUTE_CENTER[1] - GRID_SPAN_LAT / 2,
+];
 
 // ─── Sensors ──────────────────────────────────────────────────────────────────
 
 const SENSORS: SensorConfig[] = [
-  { id: "camera-front", label: "Front Camera", angleLeft: -35, angleRight:  35, rangeMeters:  80, color: "#3B82F6", opacity: 0.2  },
-  { id: "lidar-360",    label: "LiDAR 360°",   angleLeft: -180, angleRight: 180, rangeMeters:  50, color: "#10B981", opacity: 0.12 },
-  { id: "radar-rear",   label: "Rear Radar",   angleLeft:  145, angleRight: 215, rangeMeters: 120, color: "#F59E0B", opacity: 0.15 },
+  { id: "camera-front", label: "Front Camera", angleLeft: -35, angleRight:  35, rangeMeters: 120, color: "#3B82F6", opacity: 0.35 },
+  { id: "lidar-360",    label: "LiDAR 360°",   angleLeft: -180, angleRight: 180, rangeMeters:  80, color: "#10B981", opacity: 0.20 },
+  { id: "radar-rear",   label: "Rear Radar",   angleLeft:  145, angleRight: 215, rangeMeters: 180, color: "#F59E0B", opacity: 0.25 },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -209,12 +219,13 @@ export default function SLAMDemo({ token }: { token: string }) {
     <div style={{ position: "relative", height: 560 }}>
       <MapboxMap
         accessToken={token}
+        mapStyle="mapbox://styles/mapbox/dark-v11"
         initialCenter={[127.006, 37.5]}
         initialZoom={14}
         style={{ width: "100%", height: "100%" }}
       >
         <RouteLayer routes={[route]} />
-        {showOcc  && <OccupancyGrid grid={OCCUPANCY_GRID} origin={GRID_ORIGIN} resolution={RESOLUTION} opacity={0.75} />}
+        {showOcc  && <OccupancyGrid grid={OCCUPANCY_GRID} origin={GRID_ORIGIN} resolution={RESOLUTION} opacity={0.85} />}
         {showTube && <UncertaintyTube waypoints={remainingWaypoints} sigmas={remainingSigmas} color="#6366F1" opacity={0.2} />}
         {showPose && <PosGraph nodes={poseNodes} edges={poseEdges} nodeRadius={4} />}
         {showFov  && <SensorFOV position={pos} heading={heading} sensors={SENSORS} />}
