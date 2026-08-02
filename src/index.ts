@@ -53,6 +53,30 @@ export { LayerPanel } from "./components/LayerPanel";
 export { OverviewMap } from "./components/OverviewMap";
 export { ContextMenu } from "./components/ContextMenu";
 
+// ─── Design System ────────────────────────────────────────────────────────────
+export {
+  Panel,
+  PanelSection,
+  LegendItem,
+  StatPill,
+  StatRow,
+  HintBar,
+  Toolbar,
+  Button,
+  IconButton,
+} from "./components/ui";
+export type {
+  PanelProps,
+  PanelSectionProps,
+  LegendItemProps,
+  StatPillProps,
+  StatRowProps,
+  HintBarProps,
+  ToolbarProps,
+  ButtonProps,
+  IconButtonProps,
+} from "./components/ui";
+
 // ─── Hooks ───────────────────────────────────────────────────────────────────
 export { useMapboxContext } from "./context/MapboxContext";
 export { useMapReady } from "./hooks/useMapReady";

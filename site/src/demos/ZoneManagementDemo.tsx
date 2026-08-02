@@ -8,7 +8,8 @@ import {
 import type { Zone } from "mapbox-gl-kit";
 import { MarkerLayer } from "mapbox-gl-kit";
 import { ShipMarker } from "mapbox-gl-kit";
-import { AlertTriangle, Info, Play, Square, MapPin } from "lucide-react";
+import { AlertTriangle, MapPin, Play, Square } from "lucide-react";
+import { GlassPanel, PanelSection, LegendItem, SmallButton } from "../DemoUI";
 
 // ─── Zone definitions ─────────────────────────────────────────────────────────
 
@@ -35,58 +36,34 @@ const ZONES: Zone[] = [
   },
 ];
 
-// ─── Ship animation path ──────────────────────────────────────────────────────
-
 const SHIP_PATH: [number, number][] = [
-  [128.3, 35.2],
-  [128.6, 35.15],
-  [129.05, 35.05],
-  [129.35, 34.7],
-  [129.0, 34.4],
+  [128.3, 35.2], [128.6, 35.15], [129.05, 35.05], [129.35, 34.7], [129.0, 34.4],
 ];
 
-// ─── Point-in-polygon (ray casting) ──────────────────────────────────────────
+const ZONE_LEGEND: { type: string; label: string; color: string; fill: string }[] = [
+  { type: "forbidden",   label: "진입 금지",  color: "#EF4444", fill: "rgba(239,68,68,0.2)"   },
+  { type: "speed_limit", label: "속력 제한",  color: "#F59E0B", fill: "rgba(245,158,11,0.2)"  },
+  { type: "danger",      label: "위험 구역",  color: "#A855F7", fill: "rgba(168,85,247,0.2)"  },
+  { type: "temporary",   label: "임시 구역",  color: "#F87171", fill: "rgba(239,68,68,0.18)"  },
+  { type: "anchorage",   label: "정박 구역",  color: "#10B981", fill: "rgba(16,185,129,0.2)"  },
+  { type: "pilot",       label: "도선 구역",  color: "#3B82F6", fill: "rgba(59,130,246,0.2)"  },
+];
 
 function pip(pt: [number, number], ring: [number, number][]): boolean {
   let inside = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
     const [xi, yi] = ring[i], [xj, yj] = ring[j];
-    if (((yi > pt[1]) !== (yj > pt[1])) && pt[0] < ((xj - xi) * (pt[1] - yi)) / (yj - yi) + xi) {
+    if (((yi > pt[1]) !== (yj > pt[1])) && pt[0] < ((xj - xi) * (pt[1] - yi)) / (yj - yi) + xi)
       inside = !inside;
-    }
   }
   return inside;
 }
 
-// ─── Zone type config ─────────────────────────────────────────────────────────
-
-const ZONE_CONFIG: Record<string, { label: string; fill: string; border: string }> = {
-  forbidden:   { label: "진입 금지",  fill: "rgba(239,68,68,0.25)",   border: "#EF4444" },
-  speed_limit: { label: "속력 제한",  fill: "rgba(245,158,11,0.25)",  border: "#F59E0B" },
-  danger:      { label: "위험 구역",  fill: "rgba(168,85,247,0.25)",  border: "#A855F7" },
-  temporary:   { label: "임시 구역",  fill: "rgba(239,68,68,0.2)",    border: "#F87171" },
-  anchorage:   { label: "정박 구역",  fill: "rgba(16,185,129,0.25)",  border: "#10B981" },
-  pilot:       { label: "도선 구역",  fill: "rgba(59,130,246,0.25)",  border: "#3B82F6" },
-};
-
-// ─── Compute total path length ────────────────────────────────────────────────
-
 function pathLength(path: [number, number][]): number {
-  let d = 0;
-  for (let i = 1; i < path.length; i++) {
-    d += haversineDistance(path[i - 1], path[i], "km");
-  }
-  return d;
+  return path.reduce((d, p, i) => i === 0 ? 0 : d + haversineDistance(path[i - 1], p, "km"), 0);
 }
 
-// ─── Toast type ───────────────────────────────────────────────────────────────
-
-interface Toast {
-  id: number;
-  message: string;
-  type: "warning" | "info";
-}
-
+interface Toast { id: number; message: string; type: "warning" | "info" }
 let toastId = 0;
 
 // ─── Demo ─────────────────────────────────────────────────────────────────────
@@ -114,21 +91,16 @@ export default function ZoneManagementDemo({ token }: { token: string }) {
   const startAnim = useCallback(() => {
     if (timerRef.current) return;
     setRunning(true);
-
     timerRef.current = setInterval(() => {
-      tRef.current += 0.002;
-      if (tRef.current > 1) { tRef.current = 0; }
-
+      tRef.current = (tRef.current + 0.002) % 1;
       const pos = interpolatePosition(SHIP_PATH, tRef.current) as [number, number];
       setShipPos(pos);
 
-      // Compute heading
       const total = pathLength(SHIP_PATH);
       let cum = 0;
       for (let i = 1; i < SHIP_PATH.length; i++) {
         const seg = haversineDistance(SHIP_PATH[i - 1], SHIP_PATH[i], "km");
-        const t1 = (cum + seg) / total;
-        if (tRef.current <= t1) {
+        if (tRef.current <= (cum + seg) / total) {
           const dx = SHIP_PATH[i][0] - SHIP_PATH[i - 1][0];
           const dy = SHIP_PATH[i][1] - SHIP_PATH[i - 1][1];
           setHeading((Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360);
@@ -137,7 +109,6 @@ export default function ZoneManagementDemo({ token }: { token: string }) {
         cum += seg;
       }
 
-      // Zone entry detection
       const entered = ZONES.find((z) => pip(pos, [...z.coordinates, z.coordinates[0]]));
       if (entered && entered.id !== lastZoneRef.current) {
         lastZoneRef.current = entered.id;
@@ -147,11 +118,6 @@ export default function ZoneManagementDemo({ token }: { token: string }) {
       }
     }, 50);
   }, [pushToast]);
-
-  const toggleAnim = useCallback(() => {
-    if (running) stopAnim();
-    else startAnim();
-  }, [running, startAnim, stopAnim]);
 
   useEffect(() => () => { stopAnim(); }, [stopAnim]);
 
@@ -166,12 +132,11 @@ export default function ZoneManagementDemo({ token }: { token: string }) {
         <ZoneLayer
           zones={ZONES}
           interactive
-          onZoneClick={(z: Zone) => pushToast(`${z.name}`, "info")}
+          onZoneClick={(z: Zone) => pushToast(z.name, "info")}
         />
         <MarkerLayer
           markers={[{
-            id: "ship",
-            lngLat: shipPos,
+            id: "ship", lngLat: shipPos,
             element: <ShipMarker heading={heading} color="#60A5FA" size={28} pulse={running} />,
           }]}
         />
@@ -189,8 +154,7 @@ export default function ZoneManagementDemo({ token }: { token: string }) {
             key={t.id}
             style={{
               display: "flex", alignItems: "center", gap: 8,
-              background: t.type === "warning"
-                ? "rgba(239,68,68,0.15)" : "rgba(59,130,246,0.15)",
+              background: t.type === "warning" ? "rgba(239,68,68,0.15)" : "rgba(59,130,246,0.15)",
               border: `1px solid ${t.type === "warning" ? "rgba(239,68,68,0.45)" : "rgba(59,130,246,0.45)"}`,
               color: t.type === "warning" ? "#FCA5A5" : "#93C5FD",
               borderRadius: 8, padding: "7px 16px",
@@ -210,54 +174,24 @@ export default function ZoneManagementDemo({ token }: { token: string }) {
       </div>
 
       {/* Legend */}
-      <div style={{
-        position: "absolute", top: 16, right: 16,
-        background: "rgba(15,23,42,0.88)", backdropFilter: "blur(12px)",
-        border: "1px solid rgba(255,255,255,0.09)", borderRadius: 12,
-        padding: "12px 14px", minWidth: 164,
-        boxShadow: "0 8px 32px rgba(0,0,0,.6)",
-      }}>
-        <div style={{
-          display: "flex", alignItems: "center", gap: 6,
-          fontSize: 10, fontWeight: 700, color: "#475569",
-          marginBottom: 10, letterSpacing: "0.08em", textTransform: "uppercase",
-        }}>
-          <Info size={10} />
-          구역 범례
-        </div>
-        {Object.entries(ZONE_CONFIG).map(([type, { label, fill, border }]) => (
-          <div key={type} style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 6 }}>
-            <span style={{
-              width: 18, height: 12, borderRadius: 3, flexShrink: 0,
-              background: fill, border: `1.5px solid ${border}`,
-            }} />
-            <span style={{ fontSize: 11.5, color: "#CBD5E1", letterSpacing: "0.01em" }}>{label}</span>
-          </div>
-        ))}
-      </div>
+      <GlassPanel style={{ position: "absolute", top: 16, right: 16, padding: "12px 14px", minWidth: 160 }}>
+        <PanelSection label="구역 범례">
+          {ZONE_LEGEND.map(({ type, label, color, fill }) => (
+            <LegendItem key={type} type="area" color={color} fill={fill} label={label} />
+          ))}
+        </PanelSection>
+      </GlassPanel>
 
       {/* Playback button */}
       <div style={{ position: "absolute", bottom: 16, left: 16 }}>
-        <button
-          onClick={toggleAnim}
-          style={{
-            display: "flex", alignItems: "center", gap: 7,
-            padding: "8px 16px", borderRadius: 8, cursor: "pointer",
-            background: running
-              ? "rgba(16,185,129,0.18)" : "rgba(59,130,246,0.18)",
-            border: `1px solid ${running ? "rgba(16,185,129,0.45)" : "rgba(59,130,246,0.45)"}`,
-            color: running ? "#6EE7B7" : "#93C5FD",
-            fontSize: 12, fontWeight: 600,
-            backdropFilter: "blur(8px)",
-            boxShadow: "0 2px 12px rgba(0,0,0,.35)",
-            transition: "all .15s",
-          } as React.CSSProperties}
+        <SmallButton
+          variant={running ? "success" : "primary"}
+          icon={running ? <Square size={12} /> : <Play size={12} />}
+          onClick={() => running ? stopAnim() : startAnim()}
+          style={{ padding: "8px 16px", borderRadius: 8, fontSize: 12 }}
         >
-          {running
-            ? <><Square size={12} /> 정지</>
-            : <><Play size={12} /> 시뮬레이션 시작</>
-          }
-        </button>
+          {running ? "정지" : "시뮬레이션 시작"}
+        </SmallButton>
       </div>
 
       <style>{`@keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}`}</style>
